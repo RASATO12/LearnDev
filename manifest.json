@@ -1,0 +1,16 @@
+{
+  "name": "LearnDev AI Web Builder",
+  "short_name": "LearnDev",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "description": "Platform AI Web Builder interaktif berbasis client-side 100% gratis.",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/code-2.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
