@@ -442,23 +442,51 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
                 generateText.textContent = 'Generating PRD...';
                 generateSpinner.classList.remove('hidden');
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    { text: fullPrompt }
-                                ]
-                            }
-                        ]
-                    })
-                });
+                const selectedModel = providerSelect ? providerSelect.value : 'gemini-2.5-flash';
+                const modelsToTry = [selectedModel];
+                if (!modelsToTry.includes('gemini-1.5-flash')) modelsToTry.push('gemini-1.5-flash');
+                if (!modelsToTry.includes('gemini-1.5-pro')) modelsToTry.push('gemini-1.5-pro');
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error?.message || 'Gagal menghubungi Gemini API');
-                const rawContent = data.candidates[0].content.parts[0].text;
+                let rawContent = '';
+                let lastError = null;
+
+                for (const model of modelsToTry) {
+                    try {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [
+                                    {
+                                        parts: [
+                                            { text: fullPrompt }
+                                        ]
+                                    }
+                                ]
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.error?.message || `Gagal menghubungi Gemini API (${model})`);
+                        }
+                        
+                        rawContent = data.candidates[0].content.parts[0].text;
+                        break;
+                    } catch (err) {
+                        lastError = err;
+                        const errText = err.message.toLowerCase();
+                        if (errText.includes('high demand') || errText.includes('503') || errText.includes('quota') || errText.includes('rate')) {
+                            console.warn(`Model ${model} overloaded, mencoba fallback model berikutnya...`);
+                            continue;
+                        }
+                        throw err;
+                    }
+                }
+
+                if (!rawContent) {
+                    throw lastError || new Error('Semua model Gemini sedang sibuk / overloaded. Silakan coba lagi nanti.');
+                }
 
                 generatedMarkdown = rawContent.replace(/^```markdown\n/i, '').replace(/^```md\n/i, '').replace(/```$/, '').trim();
 
