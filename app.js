@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const agentHeader = '# AGENT INSTRUCTION & PRD CONTEXT\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
+            const agentHeader = '# CRITICAL DIRECTIVE FOR AI CODING: Do NOT generate placeholder wireframes. Generate a fully-styled, feature-complete, interactive HTML page with rich sample data and modern UI components.\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
             const markdownWithHeader = agentHeader + generatedMarkdown;
 
             const blob = new Blob([markdownWithHeader], { type: 'text/markdown;charset=utf-8' });
@@ -331,7 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const BASE_PRD_SYSTEM_PROMPT = `Anda adalah seorang Lead Product Manager dan System Architect ahli. Tugas Anda adalah menghasilkan dokumen PRD (Project Requirements Document) yang sangat profesional, komprehensif, dan siap dieksekusi oleh tim engineering dalam format Markdown (.md). 
 
-Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka atau penutup:
+Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka atau penutup, serta mewajibkan implementasi aplikasi "Production-Ready / Siap Pakai" tanpa revisi melalui instruksi wajib berikut:
+
+CRITICAL INSTRUCTIONS FOR AI CODING & ARCHITECTURE:
+1. Mock Data Awal (Wajib): AI Coding wajib menyediakan Array Data Bawaan (mock items, dummy users, sample transactions) yang langsung tampil saat web dibuka. Layar TIDAK BOLEH dalam keadaan kosong (empty state) pada first load.
+2. Production UI Standard: Gunakan kombinasi Tailwind CSS rich (Modern Gradients, Card Shadows shadow-xl, Rounded Borders rounded-2xl, Hover Transitions hover:scale-[1.02] transition-all, Badges), FontAwesome Icons interaktif di setiap tombol/badge/header, serta Layout presisi (Sidebar / Top Navbar / Dashboard Cards Grid).
+3. Interaktivitas & UX Flow: Sertakan implementasi Modal Pop-up (Struk Transaksi, Confirm Dialog), Toast Notifications saat aksi, dan pastikan fungsi kalkulasi (total harga, kembalian, filter pencarian) berjalan 100% tanpa mock placeholder.
+
 # PRD — Project Requirements Document: [Nama Aplikasi]
 
 ## 1. Overview
