@@ -6,6 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const installBtn = document.getElementById('install-btn');
     const providerSelect = document.getElementById('provider-select');
     const promptInput = document.getElementById('prompt-input');
+    const uiThemeSelect = document.getElementById('uiTheme');
+    const uiThemeCustom = document.getElementById('uiThemeCustom');
+
+    uiThemeSelect.addEventListener('change', () => {
+        if (uiThemeSelect.value === 'custom') {
+            uiThemeCustom.classList.remove('hidden');
+            uiThemeCustom.focus();
+        } else {
+            uiThemeCustom.classList.add('hidden');
+            uiThemeCustom.value = '';
+        }
+    });
     const generateBtn = document.getElementById('generate-btn');
     const generateText = document.getElementById('generate-text');
     const generateSpinner = document.getElementById('generate-spinner');
@@ -335,9 +347,23 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
             return;
         }
 
-        const toggleCompress = document.getElementById('toggle-compress').checked;
-        const toggleConcise = document.getElementById('toggle-concise').checked;
-        const toggleMinimalist = document.getElementById('toggle-minimalist').checked;
+        const uiThemeSelect = document.getElementById('uiTheme');
+        const uiThemeCustom = document.getElementById('uiThemeCustom');
+        const uiThemeValue = uiThemeSelect.value === 'custom' ? uiThemeCustom.value.trim() : uiThemeSelect.value;
+
+        if (uiThemeSelect.value === 'custom' && !uiThemeCustom.value.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Input Tema Diperlukan',
+                text: 'Silakan deskripsikan tema UI kustom yang Anda inginkan.',
+                background: '#0f172a',
+                color: '#f8fafc',
+                confirmButtonColor: '#4f46e5'
+            }).then(() => {
+                uiThemeCustom.focus();
+            });
+            return;
+        }
 
         let promptText = promptTextRaw;
         if (toggleCompress) {
@@ -352,6 +378,13 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
             dynamicSystemPrompt += " Prioritize essential MVP features and lightweight lean architecture (YAGNI principle).";
         }
 
+        let uiThemeInstruction = "";
+        if (uiThemeValue && uiThemeValue !== 'auto') {
+            uiThemeInstruction += `\n\nSECTION 8: UI/UX DESIGN SYSTEM & TAILWIND STYLING GUIDELINES — The product MUST have a complete, implementable UI/UX design system following these rules:\n\na. Visual Vibe & Style Target: ${uiThemeValue}.\nb. Color Palette — provide Primary, Secondary, Background, Surface, and Accent colors, each with both HEX code and Tailwind CSS classes.\nc. Typography Rules — specify heading font family/size/line-height and body font family/size/line-height.\nd. Component Styling — define border radius (Tailwind radius scale), shadow effects (Tailwind shadow classes), and all interactive button states (default / hover / active / disabled).\ne. Deliver usable Tailwind CSS Config (JSON) snippet and CSS custom properties ready for copy-paste.\n\nSYSTEM NOTE FOR AI CODING AGENT: Strictly adhere to the Color Palette and Tailwind CSS design tokens defined in Section 8 when generating all UI components.`;
+        }
+
+        let fullPrompt = `${dynamicSystemPrompt}${uiThemeInstruction}\n\nIde Aplikasi: ${promptText}`;
+
         generateBtn.disabled = true;
         generateText.textContent = 'Generating PRD...';
         generateSpinner.classList.remove('hidden');
@@ -364,7 +397,7 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
                     contents: [
                         {
                             parts: [
-                                { text: `${dynamicSystemPrompt}\n\nIde Aplikasi: ${promptText}` }
+                                { text: fullPrompt }
                             ]
                         }
                     ]

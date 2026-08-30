@@ -91,12 +91,29 @@ tailwind.config = {
                 </div>
             </div>
         </div>
-        <div class="flex-1 flex flex-col space-y-1">
+         <div class="flex-1 flex flex-col space-y-1">
             <div class="flex justify-between items-center">
                 <label for="prompt-input" class="block text-xs font-medium text-slate-300 uppercase tracking-wider">Prompt/Ide Aplikasi (PRD Generator)</label>
                 <span class="text-[11px] text-slate-500">Structured .md PRD</span>
             </div>
             <textarea id="prompt-input" class="w-full flex-1 min-h-[140px] bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none placeholder-slate-500" placeholder="Contoh: Buatkan PRD untuk aplikasi e-commerce fashion lokal dengan fitur keranjang, checkout WhatsApp, dan sistem manajemen diskon flash sale."></textarea>
+        </div>
+        <div class="space-y-1">
+            <label for="uiTheme" class="block text-xs font-medium text-slate-300 uppercase tracking-wider">TEMA / GAYA VISUAL UI (OPSIONAL)</label>
+            <div class="relative">
+                <select id="uiTheme" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition appearance-none pr-8">
+                    <option value="auto" selected>Auto Detect from Prompt (Rekomendasi AI)</option>
+                    <option value="modern-dark">Modern Dark Mode (SaaS Style)</option>
+                    <option value="clean-min">Clean &amp; Minimalist White</option>
+                    <option value="neon-cyberpunk">Neon Cyberpunk / Dark Futuristic</option>
+                    <option value="soft-pastel">Soft Pastel / Friendly UI</option>
+                    <option value="custom">Custom Vibe (Input Teks Bebas)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                </div>
+            </div>
+            <input type="text" id="uiThemeCustom" class="hidden w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none placeholder-slate-500 mt-1" placeholder="Deskripsikan tema UI yang diinginkan...">
         </div>
         <div class="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3 space-y-2.5">
             <div class="flex items-center justify-between">
