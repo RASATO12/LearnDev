@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const agentHeader = '# CRITICAL DIRECTIVE FOR AI CODING: Do NOT generate placeholder wireframes. Generate a fully-styled, feature-complete, interactive HTML page with rich sample data and modern UI components.\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
+            const agentHeader = '# CRITICAL REQUIREMENT FOR AI CODING: You must output a fully-working, production-grade web app with REAL Unsplash image URLs, complete interactive JavaScript logic for ALL features, and modern 2026 Micro-SaaS UI design guidelines. NO dummy placeholders or non-functional buttons allowed.\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
             const markdownWithHeader = agentHeader + generatedMarkdown;
 
             const blob = new Blob([markdownWithHeader], { type: 'text/markdown;charset=utf-8' });
@@ -329,14 +329,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-history').addEventListener('click', openHistoryModal);
 
-    const BASE_PRD_SYSTEM_PROMPT = `Anda adalah seorang Lead Product Manager dan System Architect ahli. Tugas Anda adalah menghasilkan dokumen PRD (Project Requirements Document) yang sangat profesional, komprehensif, dan siap dieksekusi oleh tim engineering dalam format Markdown (.md). 
+    const BASE_PRD_SYSTEM_PROMPT = `Anda adalah seorang Lead Product Manager dan System Architect ahli. Tugas Anda adalah menghasilkan dokumen PRD (Project Requirements Document) yang sangat profesional, komprehensif, dan siap dieksekusi oleh tim engineering dalam format Markdown (.md).
 
 Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka atau penutup, serta mewajibkan implementasi aplikasi "Production-Ready / Siap Pakai" tanpa revisi melalui instruksi wajib berikut:
 
-CRITICAL INSTRUCTIONS FOR AI CODING & ARCHITECTURE:
-1. Mock Data Awal (Wajib): AI Coding wajib menyediakan Array Data Bawaan (mock items, dummy users, sample transactions) yang langsung tampil saat web dibuka. Layar TIDAK BOLEH dalam keadaan kosong (empty state) pada first load.
-2. Production UI Standard: Gunakan kombinasi Tailwind CSS rich (Modern Gradients, Card Shadows shadow-xl, Rounded Borders rounded-2xl, Hover Transitions hover:scale-[1.02] transition-all, Badges), FontAwesome Icons interaktif di setiap tombol/badge/header, serta Layout presisi (Sidebar / Top Navbar / Dashboard Cards Grid).
-3. Interaktivitas & UX Flow: Sertakan implementasi Modal Pop-up (Struk Transaksi, Confirm Dialog), Toast Notifications saat aksi, dan pastikan fungsi kalkulasi (total harga, kembalian, filter pencarian) berjalan 100% tanpa mock placeholder.
+CRITICAL INSTRUCTIONS FOR AI CODING & ARCHITECTURE — WAJIB DIPATUHI 100% (NO STUB, NO PLACEHOLDER):
+
+1. ATURAN GAMBAR PRODUK / ASSET (MANDATORY REAL IMAGES):
+   - SELALU gunakan URL gambar nyata dari Unsplash CDN (https://images.unsplash.com/photo-...) untuk setiap mock data produk, avatar, dan hero section.
+   - DILARANG KERAS: <img> kosong, placeholder.com, via.placeholder, local path rusak (src="image.jpg"), atau src="#".
+   - Setiap item mock data WAJIB punya field image: "https://images.unsplash.com/photo-..." dengan ID foto valid. Contoh: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80".
+
+2. ATURAN FUNGSIONALITAS 100% (NO STUB / FULL JS LOGIC):
+   - SELURUH fitur pada PRD WAJIB punya logika JavaScript interaktif yang bekerja penuh saat dijalankan di browser — bukan tombol hiasan/mati.
+   - Semua tombol (Filter, Search, Add to Cart, Modal Pop-up, Delete, Calculate, Checkout, Pagination) WAJIB dipasang addEventListener dan mengupdate state/DOM secara real-time.
+   - Wajib implementasi: state management (array/object), render ulang dinamis, validasi input, kalkulasi live, localStorage persist jika relevan. DILARANG stub: onclick="" kosong, TODO, console.log saja, atau alert("coming soon").
+
+3. ATURAN DESIGN SYSTEM TRENDI (ANTI-JADUL / MODERN 2026 MICRO-SAAS UI):
+   - Gaya visual WAJIB: Modern Clean Micro-SaaS & Bento Grid Layout — minimalis, spacious, presisi. HARAM: neumorphism jadul, gradient norak, warna-warni acak.
+   - Typography: Font 'Inter' atau 'Plus Jakarta Sans' (via Google Fonts). Heading font-semibold tracking-tight, body font-normal leading-relaxed.
+   - Tailwind WAJIB pakai token ini:
+     * Border Radius halus: rounded-2xl atau rounded-3xl (jangan rounded-md kasar).
+     * Subtle Borders: border border-slate-200/60 (light) atau border-slate-800/80 (dark).
+     * Ambient Soft Shadows: shadow-[0_8px_30px_rgb(0,0,0,0.04)] (jangan shadow-xl tebal).
+     * Micro-Interactions: transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.
+     * Accent Highlights: SATU warna aksen elegan saja (Indigo-600 / Emerald-500 / Violet-600) — konsisten di button, badge, link. Jangan pelangi.
+   - Layout: Bento Grid Cards, whitespace lega (p-6 gap-6), Sidebar/Top Navbar clean, Card dengan backdrop-blur jika relevan.
+
+4. Mock Data Awal (Wajib): Sediakan Array Data Bawaan (mock items, dummy users, sample transactions) dengan gambar Unsplash real yang langsung tampil saat web dibuka. Layar TIDAK BOLEH kosong (empty state) pada first load.
+5. Interaktivitas & UX Flow: Sertakan Modal Pop-up (Struk Transaksi, Confirm Dialog), Toast Notifications, FontAwesome Icons di setiap tombol/badge/header, serta fungsi kalkulasi (total harga, kembalian, filter pencarian) yang berjalan 100%.
 
 # PRD — Project Requirements Document: [Nama Aplikasi]
 
