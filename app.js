@@ -139,6 +139,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    document.getElementById('btnDownloadAgent').addEventListener('click', () => {
+        if (!generatedMarkdown) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'Belum ada PRD untuk diunduh!',
+                background: '#0f172a',
+                color: '#f8fafc',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            return;
+        }
+
+        const agentHeader = '# AGENT INSTRUCTION & PRD CONTEXT\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
+        const markdownWithHeader = agentHeader + generatedMarkdown;
+
+        const blob = new Blob([markdownWithHeader], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'agent.md';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
     document.getElementById('btnDownloadPdf').addEventListener('click', () => {
         if (!generatedMarkdown) {
             Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
