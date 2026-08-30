@@ -142,63 +142,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('btnDownloadAgent').addEventListener('click', () => {
-        if (!generatedMarkdown) {
+    const btnDownloadAgent = document.getElementById('btnDownloadAgent');
+    if (btnDownloadAgent) {
+        btnDownloadAgent.addEventListener('click', () => {
+            if (!generatedMarkdown) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'info',
+                    title: 'Belum ada PRD untuk diunduh!',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                return;
+            }
+
+            const agentHeader = '# AGENT INSTRUCTION & PRD CONTEXT\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
+            const markdownWithHeader = agentHeader + generatedMarkdown;
+
+            const blob = new Blob([markdownWithHeader], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'agent.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    const btnDownloadPdf = document.getElementById('btnDownloadPdf');
+    if (btnDownloadPdf) {
+        btnDownloadPdf.addEventListener('click', () => {
+            if (!generatedMarkdown) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
+                return;
+            }
+
             Swal.fire({
                 toast: true,
                 position: 'top-end',
                 icon: 'info',
-                title: 'Belum ada PRD untuk diunduh!',
+                title: 'Proses generate PDF dimulai...',
                 background: '#0f172a',
                 color: '#f8fafc',
-                timer: 1500,
+                timer: 2000,
                 showConfirmButton: false
             });
-            return;
-        }
 
-        const agentHeader = '# AGENT INSTRUCTION & PRD CONTEXT\n# Project: LearnDev Generated Spec\n# Note for AI Coding: Follow all requirements, user flows, architecture, and UI Design Tokens strictly.\n\n';
-        const markdownWithHeader = agentHeader + generatedMarkdown;
+            const element = document.getElementById('prd-content');
+            const opt = {
+                margin: 10,
+                filename: 'PRD-LearnDev.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
 
-        const blob = new Blob([markdownWithHeader], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'agent.md';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
-
-    document.getElementById('btnDownloadPdf').addEventListener('click', () => {
-        if (!generatedMarkdown) {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
-            return;
-        }
-
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'info',
-            title: 'Proses generate PDF dimulai...',
-            background: '#0f172a',
-            color: '#f8fafc',
-            timer: 2000,
-            showConfirmButton: false
+            html2pdf().set(opt).from(element).save();
         });
-
-        const element = document.getElementById('prd-content');
-        const opt = {
-            margin: 10,
-            filename: 'PRD-LearnDev.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        html2pdf().set(opt).from(element).save();
-    });
+    }
 
     const getHistory = () => {
         try {
@@ -358,7 +364,8 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
 
     if (generateBtn) {
         generateBtn.addEventListener('click', async () => {
-        const apiKey = getGeminiKey();
+            console.log('Generate button clicked');
+            const apiKey = getGeminiKey();
 
         if (!apiKey) {
             Swal.fire({
@@ -496,5 +503,6 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
             generateText.textContent = 'Generate PRD Document';
             generateSpinner.classList.add('hidden');
         }
-    });
+      });
+    }
 });
