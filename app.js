@@ -9,15 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const uiThemeSelect = document.getElementById('uiTheme');
     const uiThemeCustom = document.getElementById('uiThemeCustom');
 
-    uiThemeSelect.addEventListener('change', () => {
-        if (uiThemeSelect.value === 'custom') {
-            uiThemeCustom.classList.remove('hidden');
-            uiThemeCustom.focus();
-        } else {
-            uiThemeCustom.classList.add('hidden');
-            uiThemeCustom.value = '';
-        }
-    });
+    if (uiThemeSelect) {
+        uiThemeSelect.addEventListener('change', () => {
+            if (uiThemeSelect.value === 'custom') {
+                uiThemeCustom.classList.remove('hidden');
+                uiThemeCustom.focus();
+            } else {
+                uiThemeCustom.classList.add('hidden');
+                uiThemeCustom.value = '';
+            }
+        });
+    }
+
     const generateBtn = document.getElementById('generate-btn');
     const generateText = document.getElementById('generate-text');
     const generateSpinner = document.getElementById('generate-spinner');
@@ -353,7 +356,8 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
 - High-Level Tech Stack yang disarankan
 - Panduan Desain & Aturan Tipografi`;
 
-    generateBtn.addEventListener('click', async () => {
+    if (generateBtn) {
+        generateBtn.addEventListener('click', async () => {
         const apiKey = getGeminiKey();
 
         if (!apiKey) {
@@ -378,9 +382,15 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
 
         const uiThemeSelect = document.getElementById('uiTheme');
         const uiThemeCustom = document.getElementById('uiThemeCustom');
-        const uiThemeValue = uiThemeSelect.value === 'custom' ? uiThemeCustom.value.trim() : uiThemeSelect.value;
 
-        if (uiThemeSelect.value === 'custom' && !uiThemeCustom.value.trim()) {
+        let uiThemeValue = 'auto';
+        if (uiThemeSelect) {
+            uiThemeValue = uiThemeSelect.value === 'custom' && uiThemeCustom
+                ? (uiThemeCustom.value.trim() || 'auto')
+                : uiThemeSelect.value;
+        }
+
+        if (uiThemeSelect && uiThemeSelect.value === 'custom' && uiThemeCustom && !uiThemeCustom.value.trim()) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Input Tema Diperlukan',
