@@ -364,145 +364,152 @@ Wajib menyusun struktur PRD ke dalam 7 section utama berikut tanpa teks pembuka 
 
     if (generateBtn) {
         generateBtn.addEventListener('click', async () => {
-            console.log('Generate button clicked');
-            const apiKey = getGeminiKey();
+            console.log('Proses generate PRD dimulai...');
 
-        if (!apiKey) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'API Key Diperlukan',
-                text: 'Silakan isi Google Gemini API Key terlebih dahulu.',
-                background: '#0f172a',
-                color: '#f8fafc',
-                confirmButtonColor: '#4f46e5'
-            }).then(() => {
-                openApiKeyModal();
-            });
-            return;
-        }
-
-        const promptTextRaw = promptInput.value.trim();
-        if (!promptTextRaw) {
-            Swal.fire({ icon: 'warning', title: 'Prompt Kosong', text: 'Silakan masukkan ide atau deskripsi aplikasi yang ingin dibuat PRD-nya.', background: '#0f172a', color: '#f8fafc' });
-            return;
-        }
-
-        const uiThemeSelect = document.getElementById('uiTheme');
-        const uiThemeCustom = document.getElementById('uiThemeCustom');
-
-        let uiThemeValue = 'auto';
-        if (uiThemeSelect) {
-            uiThemeValue = uiThemeSelect.value === 'custom' && uiThemeCustom
-                ? (uiThemeCustom.value.trim() || 'auto')
-                : uiThemeSelect.value;
-        }
-
-        if (uiThemeSelect && uiThemeSelect.value === 'custom' && uiThemeCustom && !uiThemeCustom.value.trim()) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Input Tema Diperlukan',
-                text: 'Silakan deskripsikan tema UI kustom yang Anda inginkan.',
-                background: '#0f172a',
-                color: '#f8fafc',
-                confirmButtonColor: '#4f46e5'
-            }).then(() => {
-                uiThemeCustom.focus();
-            });
-            return;
-        }
-
-        let promptText = promptTextRaw;
-        if (toggleCompress) {
-            promptText = promptTextRaw.replace(/\s+/g, ' ').trim();
-        }
-
-        let dynamicSystemPrompt = BASE_PRD_SYSTEM_PROMPT;
-        if (toggleConcise) {
-            dynamicSystemPrompt += " Generate ONLY pure structured Markdown PRD. No conversational intro, no conversational conclusion.";
-        }
-        if (toggleMinimalist) {
-            dynamicSystemPrompt += " Prioritize essential MVP features and lightweight lean architecture (YAGNI principle).";
-        }
-
-        let uiThemeInstruction = "";
-        if (uiThemeValue && uiThemeValue !== 'auto') {
-            uiThemeInstruction += `\n\nSECTION 8: UI/UX DESIGN SYSTEM & TAILWIND STYLING GUIDELINES — The product MUST have a complete, implementable UI/UX design system following these rules:\n\na. Visual Vibe & Style Target: ${uiThemeValue}.\nb. Color Palette — provide Primary, Secondary, Background, Surface, and Accent colors, each with both HEX code and Tailwind CSS classes.\nc. Typography Rules — specify heading font family/size/line-height and body font family/size/line-height.\nd. Component Styling — define border radius (Tailwind radius scale), shadow effects (Tailwind shadow classes), and all interactive button states (default / hover / active / disabled).\ne. Deliver usable Tailwind CSS Config (JSON) snippet and CSS custom properties ready for copy-paste.\n\nSYSTEM NOTE FOR AI CODING AGENT: Strictly adhere to the Color Palette and Tailwind CSS design tokens defined in Section 8 when generating all UI components.`;
-        }
-
-        let fullPrompt = `${dynamicSystemPrompt}${uiThemeInstruction}\n\nIde Aplikasi: ${promptText}`;
-
-        generateBtn.disabled = true;
-        generateText.textContent = 'Generating PRD...';
-        generateSpinner.classList.remove('hidden');
-
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                { text: fullPrompt }
-                            ]
-                        }
-                    ]
-                })
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error?.message || 'Gagal menghubungi Gemini API');
-            const rawContent = data.candidates[0].content.parts[0].text;
-
-            generatedMarkdown = rawContent.replace(/^```markdown\n/i, '').replace(/^```md\n/i, '').replace(/```$/, '').trim();
-
-            saveHistoryItem(promptText, generatedMarkdown);
-            renderPrd(generatedMarkdown);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: 'Dokumen PRD berhasil digenerate.',
-                background: '#0f172a',
-                color: '#f8fafc',
-                timer: 1500,
-                showConfirmButton: false
-            });
-
-        } catch (error) {
-            const errLower = error.message.toLowerCase();
-            const isAuthError = errLower.includes('unauthorized') || 
-                                errLower.includes('api key') || 
-                                errLower.includes('key not valid') ||
-                                errLower.includes('invalid') ||
-                                errLower.includes('401') ||
-                                errLower.includes('403');
-
-            Swal.fire({
-                icon: 'error',
-                title: isAuthError ? 'API Key Tidak Valid' : 'Terjadi Kesalahan',
-                text: isAuthError ? 'API Key Tidak Valid atau Salah! Silakan periksa kembali API Key Anda.' : (error.message || 'Gagal menghasilkan PRD.'),
-                background: '#0f172a',
-                color: '#f8fafc',
-                showCancelButton: true,
-                confirmButtonText: 'OK',
-                cancelButtonText: 'Ubah API Key',
-                confirmButtonColor: '#4f46e5',
-                cancelButtonColor: '#64748b'
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.cancel) {
-                    openApiKeyModal();
+            try {
+                const apiKey = getGeminiKey();
+                if (!apiKey) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'API Key Diperlukan',
+                        text: 'Silakan isi Google Gemini API Key terlebih dahulu.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#4f46e5'
+                    }).then(() => {
+                        openApiKeyModal();
+                    });
+                    return;
                 }
-            });
 
-            previewEmpty.classList.remove('hidden');
-            prdContent.innerHTML = '';
+                const promptTextRaw = promptInput ? promptInput.value.trim() : '';
+                if (!promptTextRaw) {
+                    Swal.fire({ icon: 'warning', title: 'Prompt Kosong', text: 'Silakan masukkan ide atau deskripsi aplikasi yang ingin dibuat PRD-nya.', background: '#0f172a', color: '#f8fafc' });
+                    return;
+                }
 
-        } finally {
-            generateBtn.disabled = false;
-            generateText.textContent = 'Generate PRD Document';
-            generateSpinner.classList.add('hidden');
-        }
-      });
+                const uiThemeSelect = document.getElementById('uiTheme');
+                const uiThemeCustom = document.getElementById('uiThemeCustom');
+
+                let uiThemeValue = uiThemeSelect ? (uiThemeSelect.value || 'Auto Detect from Prompt (Rekomendasi AI)') : 'Auto Detect from Prompt (Rekomendasi AI)';
+                if (uiThemeValue === 'custom' && uiThemeCustom) {
+                    uiThemeValue = uiThemeCustom.value.trim() || 'Auto Detect from Prompt (Rekomendasi AI)';
+                }
+
+                if (uiThemeSelect && uiThemeSelect.value === 'custom' && uiThemeCustom && !uiThemeCustom.value.trim()) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Input Tema Diperlukan',
+                        text: 'Silakan deskripsikan tema UI kustom yang Anda inginkan.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#4f46e5'
+                    }).then(() => {
+                        uiThemeCustom.focus();
+                    });
+                    return;
+                }
+
+                const toggleCompressEl = document.getElementById('toggle-compress');
+                const toggleConciseEl = document.getElementById('toggle-concise');
+                const toggleMinimalistEl = document.getElementById('toggle-minimalist');
+
+                const toggleCompress = toggleCompressEl ? toggleCompressEl.checked : true;
+                const toggleConcise = toggleConciseEl ? toggleConciseEl.checked : true;
+                const toggleMinimalist = toggleMinimalistEl ? toggleMinimalistEl.checked : false;
+
+                let promptText = promptTextRaw;
+                if (toggleCompress) {
+                    promptText = promptTextRaw.replace(/\s+/g, ' ').trim();
+                }
+
+                let dynamicSystemPrompt = BASE_PRD_SYSTEM_PROMPT;
+                if (toggleConcise) {
+                    dynamicSystemPrompt += " Generate ONLY pure structured Markdown PRD. No conversational intro, no conversational conclusion.";
+                }
+                if (toggleMinimalist) {
+                    dynamicSystemPrompt += " Prioritize essential MVP features and lightweight lean architecture (YAGNI principle).";
+                }
+
+                let uiThemeInstruction = "";
+                if (uiThemeValue && uiThemeValue !== 'auto') {
+                    uiThemeInstruction += `\n\nSECTION 8: UI/UX DESIGN SYSTEM & TAILWIND STYLING GUIDELINES — The product MUST have a complete, implementable UI/UX design system following these rules:\n\na. Visual Vibe & Style Target: ${uiThemeValue}.\nb. Color Palette — provide Primary, Secondary, Background, Surface, and Accent colors, each with both HEX code and Tailwind CSS classes.\nc. Typography Rules — specify heading font family/size/line-height and body font family/size/line-height.\nd. Component Styling — define border radius (Tailwind radius scale), shadow effects (Tailwind shadow classes), and all interactive button states (default / hover / active / disabled).\ne. Deliver usable Tailwind CSS Config (JSON) snippet and CSS custom properties ready for copy-paste.\n\nSYSTEM NOTE FOR AI CODING AGENT: Strictly adhere to the Color Palette and Tailwind CSS design tokens defined in Section 8 when generating all UI components.`;
+                }
+
+                let fullPrompt = `${dynamicSystemPrompt}${uiThemeInstruction}\n\nIde Aplikasi: ${promptText}`;
+
+                generateBtn.disabled = true;
+                generateText.textContent = 'Generating PRD...';
+                generateSpinner.classList.remove('hidden');
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [
+                                    { text: fullPrompt }
+                                ]
+                            }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error?.message || 'Gagal menghubungi Gemini API');
+                const rawContent = data.candidates[0].content.parts[0].text;
+
+                generatedMarkdown = rawContent.replace(/^```markdown\n/i, '').replace(/^```md\n/i, '').replace(/```$/, '').trim();
+
+                saveHistoryItem(promptText, generatedMarkdown);
+                renderPrd(generatedMarkdown);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Dokumen PRD berhasil digenerate.',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+            } catch (error) {
+                console.error("Generate PRD Error:", error);
+                const errLower = (error.message || '').toLowerCase();
+                const isAuthError = errLower.includes('unauthorized') || 
+                                    errLower.includes('api key') || 
+                                    errLower.includes('key not valid') ||
+                                    errLower.includes('invalid') ||
+                                    errLower.includes('401') ||
+                                    errLower.includes('403');
+
+                Swal.fire({
+                    icon: 'error',
+                    title: isAuthError ? 'API Key Tidak Valid' : 'Terjadi Kesalahan',
+                    text: isAuthError ? 'API Key Tidak Valid atau Salah! Silakan periksa kembali API Key Anda.' : ('Gagal melakukan generate PRD: ' + error.message),
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    showCancelButton: true,
+                    confirmButtonText: 'OK',
+                    cancelButtonText: 'Ubah API Key',
+                    confirmButtonColor: '#4f46e5',
+                    cancelButtonColor: '#64748b'
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.cancel) {
+                        openApiKeyModal();
+                    }
+                });
+
+                if (previewEmpty) previewEmpty.classList.remove('hidden');
+                if (prdContent) prdContent.innerHTML = '';
+
+            } finally {
+                generateBtn.disabled = false;
+                generateText.textContent = 'Generate PRD Document';
+                generateSpinner.classList.add('hidden');
+            }
+        });
     }
 });
