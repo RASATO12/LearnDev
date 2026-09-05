@@ -1,6 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    try {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (e) {
+        console.warn('Lucide init warning:', e);
+    }
+
+    try {
+        if (typeof mermaid !== 'undefined') mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    } catch (e) {
+        console.warn('Mermaid init warning:', e);
+    }
 
     const apiKeyBtn = document.getElementById('apikey-btn');
     const settingsBtn = document.getElementById('btn-settings');
@@ -9,8 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const promptInput = document.getElementById('prompt-input');
     const uiThemeSelect = document.getElementById('uiTheme');
     const uiThemeCustom = document.getElementById('uiThemeCustom');
+    const mobileTabConfig = document.getElementById('mob-tab-config');
+    const mobTabResult = document.getElementById('mob-tab-result');
+    const panelConfig = document.getElementById('panel-config');
+    const panelResult = document.getElementById('panel-result');
+    const tabPreview = document.getElementById('tab-preview');
+    const tabCode = document.getElementById('tab-code');
+    const previewContainer = document.getElementById('preview-container');
+    const codeContainer = document.getElementById('code-container');
+    const prdContent = document.getElementById('prd-content');
+    const previewEmpty = document.getElementById('preview-empty');
+    const codeOutput = document.getElementById('code-output');
+    const copyBtn = document.getElementById('copy-btn');
+    const generateBtn = document.getElementById('generate-btn');
+    const generateText = document.getElementById('generate-text');
+    const generateSpinner = document.getElementById('generate-spinner');
+    const btnDownloadAgents = document.getElementById('btnDownloadAgents');
+    const btnDownloadPdf = document.getElementById('btnDownloadPdf');
+    const btnHistory = document.getElementById('btn-history');
 
-    if (uiThemeSelect) {
+    let generatedMarkdown = '';
+    let deferredPrompt = null;
+
+    if (uiThemeSelect && uiThemeCustom) {
         uiThemeSelect.addEventListener('change', () => {
             if (uiThemeSelect.value === 'custom') {
                 uiThemeCustom.classList.remove('hidden');
@@ -22,22 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const generateBtn = document.getElementById('generate-btn');
-    const generateText = document.getElementById('generate-text');
-    const generateSpinner = document.getElementById('generate-spinner');
-
-    const tabPreview = document.getElementById('tab-preview');
-    const tabCode = document.getElementById('tab-code');
-    const previewContainer = document.getElementById('preview-container');
-    const codeContainer = document.getElementById('code-container');
-    const prdContent = document.getElementById('prd-content');
-    const previewEmpty = document.getElementById('preview-empty');
-    const codeOutput = document.getElementById('code-output');
-    const copyBtn = document.getElementById('copy-btn');
-
-    let generatedMarkdown = '';
-    let deferredPrompt = null;
-
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -47,19 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        installBtn.classList.remove('hidden');
-        installBtn.classList.add('flex');
+        if (installBtn) {
+            installBtn.classList.remove('hidden');
+            installBtn.classList.add('flex');
+        }
     });
 
-    installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.classList.add('hidden');
-        }
-        deferredPrompt = null;
-    });
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                installBtn.classList.add('hidden');
+            }
+            deferredPrompt = null;
+        });
+    }
 
     const getGeminiKey = () => localStorage.getItem('learndev_gemini_key') || '';
     const setGeminiKey = (key) => localStorage.setItem('learndev_gemini_key', key.trim());
@@ -67,12 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const setApiBaseUrl = (url) => localStorage.setItem('learndev_api_base_url', url.trim());
     const getApiProvider = () => localStorage.getItem('learndev_api_provider') || 'gemini';
     const setApiProvider = (provider) => localStorage.setItem('learndev_api_provider', provider);
-
-    function getApiKey() {
-        const provider = getApiProvider();
-        if (provider === '9router') return localStorage.getItem('learndev_9router_key') || '';
-        return getGeminiKey();
-    }
 
     function getApiConfig() {
         const provider = getApiProvider();
@@ -86,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function openApiKeyModal() {
         const currentProvider = getApiProvider();
         const currentBaseUrl = getApiBaseUrl();
-        const { value: apiKey } = await Swal.fire({
+        const { value: confirmed } = await Swal.fire({
             title: 'Pengaturan API Key & Endpoint',
             html: `
                 <div class="space-y-3 text-left">
@@ -97,12 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="9router" ${currentProvider === '9router' ? 'selected' : ''}>9Router Gateway</option>
                         </select>
                     </div>
-                    <div id="swal-gemini-group">
+                    <div id="swal-gemini-group" class="${currentProvider === '9router' ? 'hidden' : ''}">
                         <label class="block text-xs font-medium text-slate-300 mb-1">Google Gemini API Key</label>
                         <input type="password" id="swal-gemini-key" class="swal2-input !w-full !m-0 !bg-slate-800 !text-slate-100 !border-slate-700 !text-sm" placeholder="AIza..." value="${getGeminiKey()}">
                         <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[11px] text-indigo-400 hover:underline mt-1 inline-block">Dapatkan Gemini Key Gratis</a>
                     </div>
-                    <div id="swal-9router-group" class="hidden">
+                    <div id="swal-9router-group" class="${currentProvider === 'gemini' ? 'hidden' : ''}">
                         <label class="block text-xs font-medium text-slate-300 mb-1">9Router API Key</label>
                         <input type="password" id="swal-9router-key" class="swal2-input !w-full !m-0 !bg-slate-800 !text-slate-100 !border-slate-700 !text-sm" placeholder="sk-..." value="${localStorage.getItem('learndev_9router_key') || ''}">
                         <label class="block text-xs font-medium text-slate-300 mb-1 mt-2">9Router Base URL</label>
@@ -117,6 +129,22 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmButtonText: 'Simpan',
             showCancelButton: true,
             cancelButtonText: 'Batal',
+            didOpen: () => {
+                const provSel = document.getElementById('swal-api-provider');
+                const gemGrp = document.getElementById('swal-gemini-group');
+                const routGrp = document.getElementById('swal-9router-group');
+                if (provSel) {
+                    provSel.addEventListener('change', (e) => {
+                        if (e.target.value === '9router') {
+                            gemGrp.classList.add('hidden');
+                            routGrp.classList.remove('hidden');
+                        } else {
+                            gemGrp.classList.remove('hidden');
+                            routGrp.classList.add('hidden');
+                        }
+                    });
+                }
+            },
             preConfirm: () => {
                 const providerEl = document.getElementById('swal-api-provider');
                 const geminiKeyEl = document.getElementById('swal-gemini-key');
@@ -134,18 +162,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil',
-            text: 'Konfigurasi API berhasil disimpan!',
-            background: '#0f172a',
-            color: '#f8fafc',
-            timer: 1500,
-            showConfirmButton: false
-        });
+        if (confirmed) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Konfigurasi API berhasil disimpan!',
+                background: '#0f172a',
+                color: '#f8fafc',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
     }
 
-    apiKeyBtn.addEventListener('click', openApiKeyModal);
+    if (apiKeyBtn) {
+        apiKeyBtn.addEventListener('click', openApiKeyModal);
+    }
 
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
@@ -174,69 +206,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    tabPreview.addEventListener('click', () => {
-        tabPreview.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm transition";
-        tabCode.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition";
-        previewContainer.classList.remove('hidden');
-        codeContainer.classList.add('hidden');
-    });
+    if (tabPreview && tabCode && previewContainer && codeContainer) {
+        tabPreview.addEventListener('click', () => {
+            tabPreview.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm transition";
+            tabCode.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition";
+            previewContainer.classList.remove('hidden');
+            codeContainer.classList.add('hidden');
+        });
 
-    tabCode.addEventListener('click', () => {
-        tabCode.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm transition";
-        tabPreview.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition";
-        codeContainer.classList.remove('hidden');
-        previewContainer.classList.add('hidden');
-    });
+        tabCode.addEventListener('click', () => {
+            tabCode.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm transition";
+            tabPreview.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition";
+            codeContainer.classList.remove('hidden');
+            previewContainer.classList.add('hidden');
+        });
+    }
 
-    // Mobile tab switching logic
-    const mobTabConfig = document.getElementById('mob-tab-config');
-    const mobTabResult = document.getElementById('mob-tab-result');
-    const panelConfig = document.getElementById('panel-config');
-    const panelResult = document.getElementById('panel-result');
-    if (mobTabConfig && mobTabResult && panelConfig && panelResult) {
-        mobTabConfig.addEventListener('click', () => {
+    if (mobileTabConfig && mobTabResult && panelConfig && panelResult) {
+        mobileTabConfig.addEventListener('click', () => {
             panelConfig.classList.remove('hidden');
             panelResult.classList.add('hidden');
-            mobTabConfig.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold bg-indigo-600 text-white border-b-2 border-indigo-500 transition";
+            mobileTabConfig.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold bg-indigo-600 text-white border-b-2 border-indigo-500 transition";
             mobTabResult.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
         });
         mobTabResult.addEventListener('click', () => {
             panelConfig.classList.add('hidden');
             panelResult.classList.remove('hidden');
-            mobTabConfig.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
+            mobileTabConfig.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
             mobTabResult.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold bg-indigo-600 text-white border-b-2 border-indigo-500 transition";
         });
     }
 
-    copyBtn.addEventListener('click', () => {
-        if (!generatedMarkdown) {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'info',
-                title: 'Belum ada PRD untuk disalin!',
-                background: '#0f172a',
-                color: '#f8fafc',
-                timer: 1500,
-                showConfirmButton: false
-            });
-            return;
-        }
-        navigator.clipboard.writeText(generatedMarkdown).then(() => {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Dokumen PRD berhasil disalin!',
-                background: '#0f172a',
-                color: '#f8fafc',
-                timer: 1500,
-                showConfirmButton: false
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            if (!generatedMarkdown) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'info',
+                    title: 'Belum ada PRD untuk disalin!',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                return;
+            }
+            navigator.clipboard.writeText(generatedMarkdown).then(() => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Dokumen PRD berhasil disalin!',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             });
         });
-    });
+    }
 
-    const btnDownloadAgents = document.getElementById('btnDownloadAgents');
     if (btnDownloadAgents) {
         btnDownloadAgents.addEventListener('click', () => {
             if (!generatedMarkdown) {
@@ -297,7 +327,6 @@ The PRD above includes Component & Dependency Map section for AST analysis.
         });
     }
 
-    const btnDownloadPdf = document.getElementById('btnDownloadPdf');
     if (btnDownloadPdf) {
         btnDownloadPdf.addEventListener('click', () => {
             if (!generatedMarkdown) {
@@ -336,30 +365,22 @@ The PRD above includes Component & Dependency Map section for AST analysis.
 
     async function renderPrd(markdownText) {
         generatedMarkdown = markdownText;
-        previewEmpty.classList.add('hidden');
-        prdContent.innerHTML = marked.parse(generatedMarkdown);
-
-        // Safe mermaid rendering with fallback
+        if (previewEmpty) previewEmpty.classList.add('hidden');
+        if (prdContent) prdContent.innerHTML = marked.parse(generatedMarkdown);
         try {
-            await mermaid.run({
-                nodes: prdContent.querySelectorAll('.language-mermaid, pre code.language-mermaid')
-            });
+            if (typeof mermaid !== 'undefined') {
+                await mermaid.run({
+                    nodes: prdContent.querySelectorAll('.language-mermaid, pre code.language-mermaid')
+                });
+            }
         } catch (mErr) {
-            console.warn('Mermaid render error, showing raw code blocks:', mErr);
-            // Fallback: replace failed mermaid blocks with pre-formatted code
-            document.querySelectorAll('.language-mermaid').forEach(el => {
-                if (!el.parentElement.classList.contains('mermaid-fallback')) {
-                    const pre = document.createElement('pre');
-                    pre.className = 'language-mermaid mermaid-fallback bg-slate-800 border border-slate-700 rounded-lg p-3 overflow-x-auto text-xs';
-                    pre.textContent = el.textContent;
-                    el.parentElement.replaceWith(pre);
-                }
-            });
+            console.warn('Mermaid render warning:', mErr);
         }
-
-        codeOutput.textContent = generatedMarkdown;
-        Prism.highlightElement(codeOutput);
-        tabPreview.click();
+        if (codeOutput) {
+            codeOutput.textContent = generatedMarkdown;
+            if (typeof Prism !== 'undefined') Prism.highlightElement(codeOutput);
+        }
+        if (tabPreview) tabPreview.click();
     }
 
     async function openHistoryModal() {
@@ -392,8 +413,14 @@ The PRD above includes Component & Dependency Map section for AST analysis.
     window.loadPrdHistory = (id) => {
         const history = getHistory();
         const item = history.find(h => h.id === id);
-        if (item) { renderPrd(item.rawMarkdown); promptInput.value = item.promptText; Swal.close(); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'PRD berhasil dimuat!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); }
+        if (item) {
+            renderPrd(item.rawMarkdown);
+            if (promptInput) promptInput.value = item.promptText;
+            Swal.close();
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'PRD berhasil dimuat!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
+        }
     };
+
     window.deletePrdHistory = (id) => {
         let history = getHistory();
         history = history.filter(h => h.id !== id);
@@ -402,7 +429,9 @@ The PRD above includes Component & Dependency Map section for AST analysis.
         openHistoryModal();
     };
 
-    document.getElementById('btn-history').addEventListener('click', openHistoryModal);
+    if (btnHistory) {
+        btnHistory.addEventListener('click', openHistoryModal);
+    }
 
     const BASE_PRD_SYSTEM_PROMPT = `Anda adalah Lead Product Manager dan System Architect ahli. Tugas Anda menghasilkan dokumen PRD dan file AGENTS.md yang 100% presisi, profesional, anti-AI-look, siap eksekusi.
 
@@ -429,7 +458,7 @@ The PRD above includes Component & Dependency Map section for AST analysis.
 ## 5. Architecture
 - Sequence Diagram menggunakan \`\`\`mermaid sequenceDiagram ... \`\`\`.
 - Component & Dependency Map (Graphify-ready): hirarki file/fungsi secara jelas.
-  WAJIB menggunakan format `graph TD` atau `graph LR` — DILARANG gunakan `component-diagram`.
+  WAJIB menggunakan format \`graph TD\` atau \`graph LR\` — DILARANG gunakan \`component-diagram\`.
   Format relasi wajib menggunakan tanda panah standar Mermaid dengan label di dalam petik dua:
   \`\`\`mermaid
   graph TD
@@ -443,10 +472,10 @@ The PRD above includes Component & Dependency Map section for AST analysis.
 
 ## 6. Database Schema
 - ERD Diagram menggunakan \`\`\`mermaid erDiagram ... \`\`\` — SYNTAX KETAT:
-  * Semua entitas didefinisikan dengan blok kurung kurawal `{ }`.
+  * Semua entitas didefinisikan dengan blok kurung kurawal \`{ }\`.
   * Nama entitas TANPA spasi/karakter khusus (camelCase/PascalCase).
-  * Relasi: `ENTITY1 ||--o{ ENTITY2 : "label"` (pakai petik dua untuk label).
-  * Atribut di dalam blok: `type name PK/FK` (tanpa titik dua di luar sintaks).
+  * Relasi: \`ENTITY1 ||--o{ ENTITY2 : "label"\` (pakai petik dua untuk label).
+  * Atribut di dalam blok: \`type name PK/FK\` (tanpa titik dua di luar sintaks).
   Contoh WAJIB diikuti:
   \`\`\`mermaid
   erDiagram
@@ -588,7 +617,7 @@ The PRD above includes Component & Dependency Map section for AST analysis.
 
                 generateBtn.disabled = true;
                 generateText.textContent = 'Generating PRD...';
-                generateSpinner.classList.remove('hidden');
+                if (generateSpinner) generateSpinner.classList.remove('hidden');
 
                 if (window.innerWidth < 768 && mobTabResult) {
                     mobTabResult.click();
@@ -654,8 +683,10 @@ The PRD above includes Component & Dependency Map section for AST analysis.
             } finally {
                 generateBtn.disabled = false;
                 generateText.textContent = 'Generate PRD Document';
-                generateSpinner.classList.add('hidden');
+                if (generateSpinner) generateSpinner.classList.add('hidden');
             }
         });
     }
+
+    console.log('LearnDev App initialized successfully');
 });

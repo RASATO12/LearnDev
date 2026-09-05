@@ -66,30 +66,30 @@ tailwind.config = {
     </div>
     <div class="flex items-center gap-1 md:gap-2 shrink-0">
         <button id="btn-history" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-2.5 py-2 md:px-3.5 md:py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0" title="Riwayat">
-            <i data-lucide="history" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+            <i class="fa-solid fa-clock-rotate-left text-indigo-400 shrink-0"></i>
             <span class="hidden sm:inline">Riwayat</span>
         </button>
         <button id="install-btn" class="hidden items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-2.5 py-2 md:px-3 md:py-2 rounded-lg transition shadow-sm min-h-[36px]" title="Install App">
-            <i data-lucide="download" class="w-4 h-4 shrink-0"></i>
+            <i class="fa-solid fa-download shrink-0"></i>
             <span class="hidden md:inline">Install App</span>
         </button>
         <button id="apikey-btn" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-2.5 py-2 md:px-3.5 md:py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0" title="API Key">
-            <i data-lucide="key" class="w-4 h-4 text-amber-400 shrink-0"></i>
+            <i class="fa-solid fa-key text-amber-400 shrink-0"></i>
             <span class="hidden sm:inline">API Key</span>
         </button>
         <button id="btn-settings" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-2.5 py-2 md:px-3 md:py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0" title="Pengaturan 9Router & Endpoint">
-            <i data-lucide="settings2" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+            <i class="fa-solid fa-network-wired text-emerald-400 shrink-0"></i>
             <span class="hidden sm:inline">9Router</span>
         </button>
     </div>
 </header>
 <nav id="mobile-tabs" class="md:hidden flex bg-slate-900 border-b border-slate-800 sticky top-[49px] z-40">
     <button id="mob-tab-config" class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold border-b-2 border-indigo-500 text-white bg-slate-800/80 transition">
-        <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+        <i class="fa-solid fa-sliders"></i>
         1. Konfigurasi PRD
     </button>
     <button id="mob-tab-result" class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
-        <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+        <i class="fa-solid fa-file-circle-check"></i>
         2. Hasil PRD
     </button>
 </nav>
@@ -104,7 +104,7 @@ tailwind.config = {
                     <option value="gemini-1.5-pro">Gemini 1.5 Pro (Komprehensif)</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <i class="fa-solid fa-chevron-down w-4 h-4"></i>
                 </div>
             </div>
         </div>
@@ -127,7 +127,7 @@ tailwind.config = {
                     <option value="custom">Custom Vibe (Input Teks Bebas)</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <i class="fa-solid fa-chevron-down w-4 h-4"></i>
                 </div>
             </div>
             <input type="text" id="uiThemeCustom" class="hidden w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-base md:text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition resize-none placeholder-slate-500 mt-1" placeholder="Deskripsikan tema UI yang diinginkan...">
@@ -135,7 +135,7 @@ tailwind.config = {
         <div class="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3 space-y-2.5">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-1.5 text-slate-200 text-xs font-semibold">
-                    <i data-lucide="sliders" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    <i class="fa-solid fa-sliders text-indigo-400"></i>
                     <span>Token Saver & Optimization</span>
                 </div>
                 <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded">Smart</span>
@@ -146,7 +146,7 @@ tailwind.config = {
                         <span class="text-slate-300 group-hover:text-slate-100 transition">Compress Prompt & Context <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1 rounded ml-1">Rec: ON</span></span>
                     </label>
                     <button type="button" onclick="Swal.fire({title: 'Compress Prompt & Context', text: 'Memangkas spasi ganda dan baris kosong tak terpakai pada prompt sebelum dikirim ke AI. Menghemat hingga 30-50% kuota input token gratisan Anda.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#4f46e5'})" class="text-slate-400 hover:text-indigo-400 mr-2 transition">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                        <i class="fa-solid fa-circle-info"></i>
                     </button>
                     <input type="checkbox" id="toggle-compress" class="sr-only peer" checked>
                     <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative cursor-pointer" onclick="document.getElementById('toggle-compress').click()"></div>
@@ -156,7 +156,7 @@ tailwind.config = {
                         <span class="text-slate-300 group-hover:text-slate-100 transition">Concise Code / Terse-style <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1 rounded ml-1">Rec: ON</span></span>
                     </label>
                     <button type="button" onclick="Swal.fire({title: 'Concise Code / Terse-style', text: 'Instruksi ketat agar AI langsung mengembalikan PRD murni tanpa kata pengantar atau basa-basi. Mempercepat proses pembuatan dokumen.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#4f46e5'})" class="text-slate-400 hover:text-indigo-400 mr-2 transition">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                        <i class="fa-solid fa-circle-info"></i>
                     </button>
                     <input type="checkbox" id="toggle-concise" class="sr-only peer" checked>
                     <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative cursor-pointer" onclick="document.getElementById('toggle-concise').click()"></div>
@@ -166,7 +166,7 @@ tailwind.config = {
                         <span class="text-slate-300 group-hover:text-slate-100 transition">Minimalist Specs / YAGNI <span class="text-[10px] text-slate-400 bg-slate-700 px-1 rounded ml-1">Opt: OFF</span></span>
                     </label>
                     <button type="button" onclick="Swal.fire({title: 'Minimalist Specs / YAGNI', text: 'Mengarahkan AI untuk mengutamakan spesifikasi MVP esensial tanpa over-engineering yang tidak diperlukan.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#4f46e5'})" class="text-slate-400 hover:text-indigo-400 mr-2 transition">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                        <i class="fa-solid fa-circle-info"></i>
                     </button>
                     <input type="checkbox" id="toggle-minimalist" class="sr-only peer">
                     <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative cursor-pointer" onclick="document.getElementById('toggle-minimalist').click()"></div>
@@ -174,7 +174,7 @@ tailwind.config = {
             </div>
         </div>
         <button id="generate-btn" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium py-3 px-4 rounded-lg shadow-lg shadow-indigo-600/20 flex items-center justify-center space-x-2 transition active:scale-[0.99] min-h-[48px]">
-            <i data-lucide="wand-2" class="w-5 h-5"></i>
+            <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
             <span id="generate-text">Generate PRD Document</span>
             <svg id="generate-spinner" class="animate-spin -ml-1 mr-3 h-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -186,25 +186,25 @@ tailwind.config = {
         <div class="bg-slate-900 border-y md:border-y-0 md:border-b border-slate-800 px-3 md:px-4 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="flex items-center space-x-1 bg-slate-800 p-1 rounded-lg border border-slate-700/50 w-fit">
                 <button id="tab-preview" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-indigo-600 text-white shadow-sm transition min-h-[32px]">
-                    <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                    <i class="fa-solid fa-file-shield"></i>
                     <span>PRD Preview</span>
                 </button>
                 <button id="tab-code" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition min-h-[32px]">
-                    <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                    <i class="fa-solid fa-code"></i>
                     <span>Raw Markdown</span>
                 </button>
             </div>
             <div class="grid grid-cols-2 sm:flex sm:items-center gap-2">
                 <button id="copy-btn" class="flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm min-h-[40px] sm:min-h-0">
-                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    <i class="fa-regular fa-copy"></i>
                     <span>Salin PRD</span>
                 </button>
                 <button id="btnDownloadPdf" class="flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm min-h-[40px] sm:min-h-0">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <i class="fa-solid fa-file-pdf"></i>
                     <span>Unduh PDF</span>
                 </button>
                 <button id="btnDownloadAgents" class="col-span-2 sm:col-span-1 flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm min-h-[40px] sm:min-h-0">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <i class="fa-solid fa-robot"></i>
                     <span>Download AGENTS.md</span>
                 </button>
             </div>
@@ -214,7 +214,7 @@ tailwind.config = {
                 <div id="prd-content" class="max-w-4xl mx-auto space-y-4"></div>
                 <div id="preview-empty" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-center p-6 space-y-3">
                     <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-slate-500 shadow-inner">
-                        <i class="fa-solid fa-file-text text-4xl"></i>
+                        <i class="fa-solid fa-file-lines text-4xl"></i>
                     </div>
                     <div class="max-w-xs space-y-1">
                         <h3 class="text-sm font-semibold text-slate-300">Belum ada PRD yang dibuat</h3>
