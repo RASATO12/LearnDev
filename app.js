@@ -188,6 +188,26 @@ document.addEventListener('DOMContentLoaded', () => {
         previewContainer.classList.add('hidden');
     });
 
+    // Mobile tab switching logic
+    const mobTabConfig = document.getElementById('mob-tab-config');
+    const mobTabResult = document.getElementById('mob-tab-result');
+    const panelConfig = document.getElementById('panel-config');
+    const panelResult = document.getElementById('panel-result');
+    if (mobTabConfig && mobTabResult && panelConfig && panelResult) {
+        mobTabConfig.addEventListener('click', () => {
+            panelConfig.classList.remove('hidden');
+            panelResult.classList.add('hidden');
+            mobTabConfig.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold bg-indigo-600 text-white border-b-2 border-indigo-500 transition";
+            mobTabResult.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
+        });
+        mobTabResult.addEventListener('click', () => {
+            panelConfig.classList.add('hidden');
+            panelResult.classList.remove('hidden');
+            mobTabConfig.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
+            mobTabResult.className = "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold bg-indigo-600 text-white border-b-2 border-indigo-500 transition";
+        });
+    }
+
     copyBtn.addEventListener('click', () => {
         if (!generatedMarkdown) {
             Swal.fire({
@@ -531,6 +551,10 @@ The PRD above includes Component & Dependency Map section for AST analysis.
                 generateBtn.disabled = true;
                 generateText.textContent = 'Generating PRD...';
                 generateSpinner.classList.remove('hidden');
+
+                if (window.innerWidth < 768 && mobTabResult) {
+                    mobTabResult.click();
+                }
 
                 const selectedModel = providerSelect ? providerSelect.value : 'gemini-2.5-flash';
                 const modelsToTry = [selectedModel];
