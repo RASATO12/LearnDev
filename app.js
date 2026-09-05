@@ -338,7 +338,25 @@ The PRD above includes Component & Dependency Map section for AST analysis.
         generatedMarkdown = markdownText;
         previewEmpty.classList.add('hidden');
         prdContent.innerHTML = marked.parse(generatedMarkdown);
-        try { await mermaid.run({ nodes: prdContent.querySelectorAll('.language-mermaid, pre code.language-mermaid') }); } catch (mErr) {}
+
+        // Safe mermaid rendering with fallback
+        try {
+            await mermaid.run({
+                nodes: prdContent.querySelectorAll('.language-mermaid, pre code.language-mermaid')
+            });
+        } catch (mErr) {
+            console.warn('Mermaid render error, showing raw code blocks:', mErr);
+            // Fallback: replace failed mermaid blocks with pre-formatted code
+            document.querySelectorAll('.language-mermaid').forEach(el => {
+                if (!el.parentElement.classList.contains('mermaid-fallback')) {
+                    const pre = document.createElement('pre');
+                    pre.className = 'language-mermaid mermaid-fallback bg-slate-800 border border-slate-700 rounded-lg p-3 overflow-x-auto text-xs';
+                    pre.textContent = el.textContent;
+                    el.parentElement.replaceWith(pre);
+                }
+            });
+        }
+
         codeOutput.textContent = generatedMarkdown;
         Prism.highlightElement(codeOutput);
         tabPreview.click();
@@ -411,18 +429,38 @@ The PRD above includes Component & Dependency Map section for AST analysis.
 ## 5. Architecture
 - Sequence Diagram menggunakan \`\`\`mermaid sequenceDiagram ... \`\`\`.
 - Component & Dependency Map (Graphify-ready): hirarki file/fungsi secara jelas.
-  Contoh:
+  WAJIB menggunakan format `graph TD` atau `graph LR` — DILARANG gunakan `component-diagram`.
+  Format relasi wajib menggunakan tanda panah standar Mermaid dengan label di dalam petik dua:
+  \`\`\`mermaid
+  graph TD
+    App["App Entry"] -->|"initialize"| Auth["Auth Module"]
+    Auth -->|"persist session"| State["State Store"]
+    State -->|"render"| UI["UI Components"]
+    UI -->|"fetch data"| API["API Client"]
+    API -->|"update cache"| State
   \`\`\`
-  component-diagram
-      App -> Auth: initialize
-      Auth -> State: persist session
-      State -> UI: render components
-      UI -> API: fetch data
-      API -> State: update cache
-  \`\`\`
+  Aturan identifier: NodeID["Label dengan spasi"] — wajib petik dua untuk label yang mengandung spasi/karakter khusus.
 
 ## 6. Database Schema
-- ERD Diagram menggunakan \`\`\`mermaid erDiagram ... \`\`\`.
+- ERD Diagram menggunakan \`\`\`mermaid erDiagram ... \`\`\` — SYNTAX KETAT:
+  * Semua entitas didefinisikan dengan blok kurung kurawal `{ }`.
+  * Nama entitas TANPA spasi/karakter khusus (camelCase/PascalCase).
+  * Relasi: `ENTITY1 ||--o{ ENTITY2 : "label"` (pakai petik dua untuk label).
+  * Atribut di dalam blok: `type name PK/FK` (tanpa titik dua di luar sintaks).
+  Contoh WAJIB diikuti:
+  \`\`\`mermaid
+  erDiagram
+    USER ||--o{ ORDER : "places"
+    USER {
+      string id PK
+      string name
+      string email
+    }
+    ORDER {
+      string id PK
+      float total_price
+    }
+  \`\`\`
 - Tabel penjelasan relasi & atribut entitas.
 
 ## 7. Design & Technical Constraints
