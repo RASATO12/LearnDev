@@ -8,9 +8,14 @@
   "description": "Platform AI Web Builder interaktif berbasis client-side 100% gratis.",
   "icons": [
     {
-      "src": "https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/icons/code-2.svg",
-      "sizes": "192x192 512x512",
+      "src": "./favicon.svg",
+      "sizes": "any",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "./favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
     }
   ]
 }
