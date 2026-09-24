@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ZOOM_MAX = 3;
 
 const TEMPLATES = {
-        ecommerce: "Buatkan PRD lengkap untuk aplikasi Mobile E-Commerce dengan fitur:\n- Katalog produk dengan kategori dan filter pencarian\n- Keranjang belanja dengan quantity adjustment dan persistent state\n- Checkout multi-payment (COD, transfer bank, e-wallet)\n- Manajemen akun pengguna dengan profil dan riwayat order\n- Notifikasi real-time via push notification\n- Dashboard admin untuk manajemen produk, order, dan analitik penjualan\n- Sistem manajemen diskon flash sale dan voucher\n- Review dan rating produk oleh pengguna\n- Wishlist dan favorite items\n- Chat customer service integration\n\nPrioritaskan UX mobile-first, performa cepat di jaringan rendah, dan keamanan transaction.",
-        saas: "Buatkan PRD lengkap untuk platform SaaS Dashboard dengan fitur:\n- Multi-tenant architecture dengan isolasi data\n- Subscription management (free, pro, enterprise tiers)\n- Billing dan invoice automation\n- Real-time analytics dashboard dengan chart dan KPIs\n- User role management (admin, member, viewer)\n- API access management dan rate limiting\n- Team collaboration workspace\n- Integrations marketplace (Slack, Zapier, CRM)\n- Audit log dan compliance reporting\n- Onboarding wizard dan guided setup\n\nFokus pada scalability, security-first design, dan enterprise-grade reliability.",
-        api: "Buatkan PRD lengkap untuk REST API Service dengan fitur:\n- RESTful endpoint design dengan versioning (v1, v2)\n- Authentication via OAuth 2.0 + JWT token management\n- Rate limiting dan throttling policies\n- Pagination, filtering, sorting, dan search\n- Webhook support untuk event-driven architecture\n- API documentation otomatis (OpenAPI/Swagger)\n- Error handling standardization (RFC 7807 Problem Details)\n- Caching strategy (Redis) dan CDN integration\n- Monitoring dan health check endpoints\n- API gateway configuration dan load balancing\n\nStandarkan pada OpenAPI 3.0 specification, semantic versioning, dan backward compatibility."
+        ecommerce: "Create a complete PRD for a Mobile E-Commerce application with features:\n- Product catalog with categories and search filters\n- Shopping cart with quantity adjustments and persistent state\n- Multi-payment checkout (COD, bank transfer, e-wallet)\n- User account management with profile and order history\n- Real-time push notifications\n- Admin dashboard for product, order, and sales analytics management\n- Flash sale and voucher discount management system\n- User product reviews and ratings\n- Wishlist and favorite items\n- Chat customer service integration\n\nPrioritize mobile-first UX, fast performance on low bandwidth, and transaction security.",
+        saas: "Create a complete PRD for a SaaS Dashboard platform with features:\n- Multi-tenant architecture with data isolation\n- Subscription management (free, pro, enterprise tiers)\n- Billing and invoice automation\n- Real-time analytics dashboard with charts and KPIs\n- User role management (admin, member, viewer)\n- API access management and rate limiting\n- Team collaboration workspace\n- Integrations marketplace (Slack, Zapier, CRM)\n- Audit log and compliance reporting\n- Onboarding wizard and guided setup\n\nFocus on scalability, security-first design, and enterprise-grade reliability.",
+        api: "Create a complete PRD for a REST API Service with features:\n- RESTful endpoint design with versioning (v1, v2)\n- Authentication via OAuth 2.0 + JWT token management\n- Rate limiting and throttling policies\n- Pagination, filtering, sorting, and search\n- Webhook support for event-driven architecture\n- Automated API documentation (OpenAPI/Swagger)\n- Error handling standardization (RFC 7807 Problem Details)\n- Caching strategy (Redis) and CDN integration\n- Monitoring and health check endpoints\n- API gateway configuration and load balancing\n\nStandardize on OpenAPI 3.0 specification, semantic versioning, and backward compatibility."
     };
 
 if (uiThemeSelect && uiThemeCustom) {
@@ -331,7 +331,7 @@ function copyToClipboard(text) {
     });
 function downloadAgents() {
     if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; }
-    const hdr = `# AGENTS.md — OpenCode & AI Coding Agent Configuration\n# Project: LearnDev Generated Spec\n# Generated: ${new Date().toLocaleString('id-ID')}\n\n## CRITICAL EXECUTION RULES\n- Read this file BEFORE any code generation.\n- NEVER output conversational filler.\n- ALL code must be production-grade, zero stubs.\n- Use REAL Unsplash CDN URLs for ALL images.\n\n## AGENTS INSTRUCTION & PRD CONTEXT\n## OpenCode & AI Coding Agent Protocol\n\n---\n\n# PRD SOURCE DOCUMENT\n`;
+    const hdr = `# AGENTS.md — OpenCode & AI Coding Agent Configuration\n# Project: LearnDev Generated Spec\n# Generated: ${new Date().toLocaleString('en-US')}\n\n## CRITICAL EXECUTION RULES\n- Read this file BEFORE any code generation.\n- NEVER output conversational filler.\n- ALL code, architecture, and comments must be production-grade technical English, zero stubs.\n- NO Indonesian or non-English text anywhere in generated specs.\n- Use REAL Unsplash CDN URLs for ALL images.\n\n## AGENTS INSTRUCTION & PRD CONTEXT\n## OpenCode & AI Coding Agent Protocol\n\n---\n\n# PRD SOURCE DOCUMENT\n`;
     const blob = new Blob([hdr + generatedMarkdown], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = 'AGENTS.md'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'AGENTS.md diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
@@ -339,23 +339,23 @@ function downloadAgents() {
 if (fabAgents) fabAgents.addEventListener('click', downloadAgents);
 
 
-const BASE_PRD_SYSTEM_PROMPT = `Anda adalah Lead Product Manager dan System Architect ahli. Hasilkan PRD Markdown profesional 8 section.
+const BASE_PRD_SYSTEM_PROMPT = `You are an expert Lead Product Manager and System Architect. Generate a professional, highly-structured 8-section Markdown PRD strictly in technical English.
 
 ## 5. Architecture
-- Gunakan FORMAT SAFEEE: hanya graph TD atau graph LR.
-- DILARANG component-diagram atau sequenceDiagram untuk map komponen.
-- Format relasi: NodeA["Label"] -->|"keterangan"| NodeB["Label"]
-- Bungkus label spasi dalam petik dua ""
+- Use SAFEEE format: strictly graph TD or graph LR.
+- NO component-diagram or sequenceDiagram for component maps.
+- Relation format: NodeA["Label"] -->|"description"| NodeB["Label"]
+- Wrap spaced labels in double quotes ""
 
 ## 6. Database Schema
-- Gunakan FORMAT ERDIAGRAM KETAT:
+- Use strict ERDIAGRAM format:
 - erDiagram
   USER ||--o{ ORDER : "places"
   USER { string id PK }
   ORDER { string id PK }
 
 ## OUTPUT
-Hasilkan markdown mentah tanpa pembungkus code fence.`;
+Generate pure structured Markdown PRD ONLY. Absolutely NO intro, NO outro, NO conversational filler, NO Indonesian text.`;
 
 if (btnGenerate) {
     btnGenerate.addEventListener('click', async () => {
@@ -377,7 +377,7 @@ if (btnGenerate) {
             const minimalist = el('toggle-minimalist')?.checked ?? false;
             let pTxt = prompt; if (compress) pTxt = prompt.replace(/\s+/g, ' ').trim();
             let dyn = BASE_PRD_SYSTEM_PROMPT;
-            if (concise) dyn += " Generate ONLY pure structured Markdown PRD. No intro/outro.";
+            if (concise) dyn += " Strictly output the pure structured Markdown PRD only. No intro, no outro, no conversational AI fluff.";
             if (minimalist) dyn += " Prioritize MVP lean architecture (YAGNI).";
             let uiIns = "";
             if (uiValFinal && uiValFinal !== 'auto') uiIns = `\n\nSECTION 8 OVERRIDE — UI/UX DESIGN SYSTEM:\nVisual Vibe: ${uiValFinal}.\nColor Tokens HEX spesifik untuk Primary/Secondary/Accent/Background/Surface/Text + Tailwind classes.\nTypography: Inter/Plus Jakarta Sans spesifik.\nComponent: rounded-2xl/3xl, shadow subtle, transition halus.\n`;
