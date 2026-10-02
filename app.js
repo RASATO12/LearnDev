@@ -385,8 +385,8 @@ if (btnGenerate) {
             btnGenerate.disabled = true; if (generateText) generateText.textContent = 'Generating PRD...'; if (generateSpinner) generateSpinner.classList.remove('hidden');
             showSkeleton();
             if (window.innerWidth < 768 && mobTabResult) mobTabResult.click();
-            const selModel = aiProvider?.value || 'gemini-1.5-flash';
-            const models = [selModel]; if (!models.includes('gemini-1.5-flash')) models.push('gemini-1.5-flash'); if (!models.includes('gemini-1.5-pro')) models.push('gemini-1.5-pro');
+            const selModel = aiProvider?.value || 'gemini-2.5-flash';
+            const models = [selModel]; if (!models.includes('gemini-2.5-flash')) models.push('gemini-2.5-flash'); if (!models.includes('gemini-2.5-pro')) models.push('gemini-2.5-pro'); if (!models.includes('gemini-1.5-flash')) models.push('gemini-1.5-flash');
             let raw = ''; let last = null;
             for (const mdl of models) {
                 try {
