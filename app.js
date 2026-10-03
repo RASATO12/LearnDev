@@ -232,6 +232,7 @@ function escapeHtml(str) {
 function cleanMermaidCode(code) {
     if (!code) return '';
     let cleaned = code
+        .replace(/\r/g, '')
         .replace(/&gt;/g, '>')
         .replace(/&lt;/g, '<')
         .replace(/&quot;/g, '"')
@@ -240,16 +241,129 @@ function cleanMermaidCode(code) {
         .replace(/```/g, '')
         .trim();
 
-    if (cleaned.startsWith('erDiagram')) {
-        cleaned = cleaned.split('\n').map(line => {
+    if (cleaned.startsWith('graph') || cleaned.startsWith('flowchart')) {
+        // LLM often packs all relations onto one line; split before every
+        // "NodeId[" or "NodeId -->" that follows a node ref / closing bracket
+        // (never after "|", ">" or "-", so arrow targets and labels stay intact)
+        cleaned = cleaned.replace(
+            /([\]\)]|[A-Za-z0-9_])(\s+)(?=[A-Za-z][A-Za-z0-9_]*(?:\[|\s*(?:-->|---|-\.->|==>)))/g,
+            '$1\n'
+        );
+
+        let lines = cleaned.split('\n');
+        let fixedLines = [];
+        for (let line of lines) {
             let l = line.trim();
-            if (l.includes('{') || l.includes('}') || l.startsWith('erDiagram') || l.includes('||') || l.includes('}|') || l.includes('|{') || l.includes('o|') || l.includes('|o') || !l) {
-                return line;
+            l = l.replace(/(\[[^\]]+\])([A-Za-z0-9_]+)$/, '$1');
+            if (l === '-->' || l === '---' || l === '-.-' || !l) continue;
+            l = l.replace(/([A-Za-z0-9_]+)\[([^\]]*)$/, (match, id, text) => {
+                return `${id}["${text.replace(/"/g, '')}"]`;
+            });
+            fixedLines.push(l);
+        }
+        cleaned = fixedLines.join('\n');
+    }
+
+    if (cleaned.startsWith('erDiagram')) {
+        const ER_TYPES = ['string', 'text', 'int', 'integer', 'bigint', 'smallint', 'tinyint', 'serial', 'bigserial', 'float', 'double', 'decimal', 'numeric', 'real', 'number', 'boolean', 'bool', 'date', 'datetime', 'timestamp', 'timestamptz', 'time', 'interval', 'uuid', 'json', 'jsonb', 'blob', 'binary', 'bytea', 'char', 'varchar', 'nchar', 'nvarchar', 'longtext', 'enum'];
+        const isErType = w => ER_TYPES.includes(w.toLowerCase().replace(/[^a-z]/g, ''));
+        // Quote-aware tokenizer: splits an entity body into raw word/comment
+        // tokens whether the LLM separated attributes with commas, spaces, or nothing
+        const tokenizeAttrs = s => {
+            const pct = s.indexOf('%%');
+            if (pct !== -1) s = s.slice(0, pct);
+            const tokens = [];
+            let i = 0, n = s.length;
+            const isSpace = c => c === ',' || c === ' ' || c === '\t';
+            while (i < n) {
+                const c = s[i];
+                if (c === '"') {
+                    const end = s.indexOf('"', i + 1);
+                    const stop = end === -1 ? n : end + 1;
+                    tokens.push({ q: s.slice(i, stop) });
+                    i = stop;
+                } else if (isSpace(c)) {
+                    i++;
+                } else if (c === '(') {
+                    const end = s.indexOf(')', i);
+                    i = end === -1 ? n : end + 1;
+                } else {
+                    let j = i;
+                    while (j < n && !isSpace(s[j]) && s[j] !== '"' && s[j] !== '(') j++;
+                    tokens.push({ w: s.slice(i, j) });
+                    i = j;
+                }
             }
-            l = l.replace(/\([^\)]*\)/g, '').replace(/\[\]/g, '');
-            l = l.replace(/PK\s*,\s*FK/gi, 'PK');
-            return l;
-        }).join('\n');
+            return tokens;
+        };
+        // Group raw tokens into attributes: type name [PK|FK] ["comment"],
+        // restarting a new attribute only when a known type word appears, so a
+        // stray qualifier word stays attached to its attribute instead of eating the next one
+        const attrsFromTokens = tokens => {
+            const groups = [];
+            let cur = null, expect = 'type';
+            for (const tk of tokens) {
+                if (tk.q) {
+                    if (cur) { cur.comment = tk.q; groups.push(cur); cur = null; expect = 'type'; }
+                    continue;
+                }
+                if (expect === 'type') { cur = { words: [tk.w], key: '', comment: '' }; expect = 'name'; }
+                else if (expect === 'name') { cur.words.push(tk.w); expect = 'optional'; }
+                else if (/^(pk|fk)$/i.test(tk.w)) { if (!cur.key) cur.key = tk.w.toUpperCase(); }
+                else if (isErType(tk.w)) { groups.push(cur); cur = { words: [tk.w], key: '', comment: '' }; expect = 'name'; }
+                else { cur.words.push(tk.w); }
+            }
+            if (cur) groups.push(cur);
+            const lines = [];
+            for (const g of groups) {
+                const w = g.words;
+                if (w.length > 2 && !w.some(isErType)) {
+                    // no type marker anywhere: treat every word as a bare column name
+                    w.forEach((x, i) => lines.push([i === w.length - 1 ? g.key : '', i === w.length - 1 ? g.comment : '']
+                        .filter(Boolean).length
+                        ? `string ${x} ${[g.key, g.comment].filter(Boolean).join(' ')}`
+                        : `string ${x}`));
+                    continue;
+                }
+                let type, name;
+                if (w.length >= 2) {
+                    if (!isErType(w[0]) && isErType(w[1])) { type = w[1]; name = w[0]; }
+                    else { type = w[0]; name = w[1]; }
+                } else if (w.length === 1) { type = 'string'; name = w[0]; }
+                else continue;
+                const line = [type, name, g.key, g.comment].filter(Boolean).join(' ');
+                if (line) lines.push(line);
+            }
+            return lines;
+        };
+        const attrsFromText = s => attrsFromTokens(tokenizeAttrs(s));
+        const isRelation = l => /(\|\||\}\||\|\{|\}o|o\{|o\||\|o)/.test(l);
+        const lines = cleaned.split('\n');
+        const out = [];
+        let inBlock = false;
+        for (let line of lines) {
+            const t = line.trim();
+            if (!t || isRelation(t)) { out.push(line); continue; }
+            const open = t.indexOf('{'), close = t.lastIndexOf('}');
+            if (open !== -1 && close > open) {
+                const head = t.slice(0, open).trim();
+                const inner = t.slice(open + 1, close);
+                const tail = t.slice(close + 1).trim();
+                out.push(head + ' {');
+                attrsFromText(inner).forEach(a => out.push('  ' + a));
+                out.push('}' + (tail ? ' ' + tail : ''));
+                inBlock = false;
+                continue;
+            }
+            if (t.endsWith('{')) { out.push(line); inBlock = true; continue; }
+            if (t.startsWith('}')) { out.push(line); inBlock = false; continue; }
+            if (inBlock) {
+                attrsFromText(t).forEach(a => out.push('  ' + a));
+                continue;
+            }
+            out.push(line);
+        }
+        cleaned = out.join('\n');
     }
 
     return cleaned;
@@ -323,10 +437,15 @@ async function renderPrd(markdownText) {
     if (btnGenerate) btnGenerate.classList.remove('animate-pulse-subtle');
     showSkeleton();
     hideSkeleton();
+    // Fence labels the LLM uses for diagram code that is really mermaid syntax
+    const DIAGRAM_LANGS = ['mermaid', 'erdiagram', 'er', 'graph', 'flowchart', 'sequencediagram', 'classdiagram', 'statediagram', 'pie', 'gantt', 'journey', 'gitgraph'];
     if (prdPreview) prdPreview.innerHTML = marked.parse(generatedMarkdown);
 
     if (typeof mermaid !== 'undefined' && prdPreview) {
-        const blocks = Array.from(prdPreview.querySelectorAll('.language-mermaid, pre code.language-mermaid'));
+        const blocks = Array.from(prdPreview.querySelectorAll('pre code[class*="language-"]')).filter(el => {
+            const m = /language-([a-z-]+)/i.exec(el.className || '');
+            return m && DIAGRAM_LANGS.includes(m[1].toLowerCase());
+        });
         for (let i = 0; i < blocks.length; i++) {
             const block = blocks[i];
             const preEl = block.closest('pre') || block;
@@ -357,7 +476,17 @@ async function renderPrd(markdownText) {
         }
     }
 
-    if (codeOutput) { codeOutput.textContent = generatedMarkdown; if (typeof Prism !== 'undefined') Prism.highlightElement(codeOutput); }
+    if (codeOutput) {
+        codeOutput.textContent = generatedMarkdown;
+        if (typeof Prism !== 'undefined') {
+            // prism-markdown auto-loads a component for every fence language label;
+            // mermaid pseudo-languages don't exist on cdnjs and 404 — register stand-ins
+            DIAGRAM_LANGS.forEach(lang => {
+                if (!Prism.languages[lang]) Prism.languages[lang] = Prism.languages.markup || {};
+            });
+            Prism.highlightElement(codeOutput);
+        }
+    }
     if (tabPreview) tabPreview.click();
     if (floatingToolbar) floatingToolbar.classList.remove('hidden');
 }
@@ -404,15 +533,33 @@ const BASE_PRD_SYSTEM_PROMPT = `You are an expert Lead Product Manager and Syste
 ## 5. Architecture
 - Use SAFEEE format: strictly graph TD or graph LR.
 - NO component-diagram or sequenceDiagram for component maps.
-- Relation format: NodeA["Label"] -->|"description"| NodeB["Label"]
-- Wrap spaced labels in double quotes ""
+- ONE relation per line. NEVER pack multiple relations onto a single line.
+- Node IDs must be simple alphanumeric without spaces (e.g. A, B, C, D).
+- Always wrap node labels in double quotes inside brackets: Node["Label text"]. Never leave brackets unclosed or truncated.
+- Example of CORRECT diagram structure:
+  graph TD
+    A["App Launch"] -->|"Select Mode"| B["Game Menu"]
+    B -->|"Start Game"| C["Gameplay"]
+    C -->|"Finish"| D["Summary"]
+    D -->|"Back to Menu"| B
 
 ## 6. Database Schema
-- Use strict ERDIAGRAM format:
-- erDiagram
+- Use strict ERDIAGRAM format, one attribute per line inside braces.
+- Each attribute line must be EXACTLY: type name [PK|FK] ["optional comment"].
+- NEVER insert extra words (Optional, Required, Nullable, Unique) between the name and the comment.
+- NEVER use %% comments inside entity braces.
+- Example of CORRECT schema:
+  erDiagram
   USER ||--o{ ORDER : "places"
-  USER { string id PK }
-  ORDER { string id PK }
+  USER {
+    string id PK
+    string email
+  }
+  ORDER {
+    string id PK
+    string userId FK
+    string audioFileName "Name of the audio file"
+  }
 
 ## OUTPUT
 Generate pure structured Markdown PRD ONLY. Absolutely NO intro, NO outro, NO conversational filler, NO Indonesian text.`;

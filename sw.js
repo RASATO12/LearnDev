@@ -1,4 +1,4 @@
-const CACHE_NAME = 'learndev-v3';
+const CACHE_NAME = 'learndev-v4';
 const ASSETS = [
     './index.html',
     './app.js',
@@ -36,6 +36,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match('./index.html'))
+        );
+        return;
+    }
     event.respondWith(
         caches.match(event.request).then((response) => response || fetch(event.request).catch(() => {}))
     );
