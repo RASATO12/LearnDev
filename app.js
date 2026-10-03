@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("LearnDev Engine Initialized");
-    try { if (typeof mermaid !== 'undefined') mermaid.initialize({ startOnLoad: false, theme: 'dark' }); } catch (e) { }
+    try { if (typeof mermaid !== 'undefined') mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose', suppressErrorRendering: true }); } catch (e) { }
     try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) { }
 
     const el = (id) => document.getElementById(id);
@@ -224,69 +224,97 @@ function hideSkeleton() {
     if (prdPreview) prdPreview.classList.remove('hidden');
 }
 
-function addMermaidControls(container) {
-    const mermaidElements = container.querySelectorAll('.mermaid');
-    mermaidElements.forEach((mermaidEl) => {
-        const wrapper = mermaidEl.parentElement;
-        if (!wrapper || wrapper.querySelector('.mermaid-controls')) return;
-        const controls = document.createElement('div');
-        controls.className = 'mermaid-controls flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-lg p-1 mb-2 shadow-lg shadow-black/30';
-        controls.innerHTML = `
-                <button class="mermaid-zoom-in w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-plus"></i></button>
-                <button class="mermaid-zoom-out w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-minus"></i></button>
-                <button class="mermaid-zoom-reset w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-expand"></i></button>
-                <div class="w-px h-4 bg-slate-700 mx-0.5"></div>
-                <button class="mermaid-download-svg w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition text-xs" title="Download SVG"><i class="fa-solid fa-download"></i></button>
-                <button class="mermaid-download-png w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition text-xs" title="Download PNG"><i class="fa-solid fa-image"></i></button>
-            `;
-        wrapper.style.position = 'relative';
-        wrapper.insertBefore(controls, mermaidEl);
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
-        let zoom = 1;
-        controls.querySelector('.mermaid-zoom-in').addEventListener('click', () => {
-            zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
-            mermaidEl.style.transform = `scale(${zoom})`;
-            mermaidEl.style.transformOrigin = 'top left';
-            controls.querySelector('.mermaid-zoom-reset').querySelector('i').className = 'fa-solid fa-expand';
-        });
-        controls.querySelector('.mermaid-zoom-out').addEventListener('click', () => {
-            zoom = Math.max(ZOOM_MIN, zoom - ZOOM_STEP);
-            mermaidEl.style.transform = `scale(${zoom})`;
-            mermaidEl.style.transformOrigin = 'top left';
-        });
-        controls.querySelector('.mermaid-zoom-reset').addEventListener('click', () => {
-            zoom = 1;
-            mermaidEl.style.transform = 'scale(1)';
-            mermaidEl.style.transformOrigin = 'top left';
-        });
-        controls.querySelector('.mermaid-download-svg').addEventListener('click', () => {
-            const svgEl = mermaidEl.querySelector('svg');
-            if (!svgEl) return;
-            const svgData = new XMLSerializer().serializeToString(svgEl);
-            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob), a = document.createElement('a');
-            a.href = url; a.download = 'mermaid-diagram.svg'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-        });
-        controls.querySelector('.mermaid-download-png').addEventListener('click', () => {
-            const svgEl = mermaidEl.querySelector('svg');
-            if (!svgEl) return;
-            const svgData = new XMLSerializer().serializeToString(svgEl);
-            const img = new Image();
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const domURL = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
-            img.onload = () => {
-                canvas.width = img.width * 2; canvas.height = img.height * 2;
-                ctx.scale(2, 2); ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-                canvas.toBlob((blob) => {
-                    const url = URL.createObjectURL(blob), a = document.createElement('a');
-                    a.href = url; a.download = 'mermaid-diagram.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                    URL.revokeObjectURL(domURL);
-                }, 'image/png');
-            };
-            img.src = domURL;
-        });
+function cleanMermaidCode(code) {
+    if (!code) return '';
+    let cleaned = code
+        .replace(/&gt;/g, '>')
+        .replace(/&lt;/g, '<')
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/```mermaid/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+    if (cleaned.startsWith('erDiagram')) {
+        cleaned = cleaned.split('\n').map(line => {
+            let l = line.trim();
+            if (l.includes('{') || l.includes('}') || l.startsWith('erDiagram') || l.includes('||') || l.includes('}|') || l.includes('|{') || l.includes('o|') || l.includes('|o') || !l) {
+                return line;
+            }
+            l = l.replace(/\([^\)]*\)/g, '').replace(/\[\]/g, '');
+            l = l.replace(/PK\s*,\s*FK/gi, 'PK');
+            return l;
+        }).join('\n');
+    }
+
+    return cleaned;
+}
+
+function addMermaidControls(wrapper) {
+    const mermaidEl = wrapper.querySelector('.mermaid');
+    if (!mermaidEl || wrapper.querySelector('.mermaid-controls')) return;
+    const controls = document.createElement('div');
+    controls.className = 'mermaid-controls flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-lg p-1 mb-2 shadow-lg shadow-black/30';
+    controls.innerHTML = `
+            <button class="mermaid-zoom-in w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-plus"></i></button>
+            <button class="mermaid-zoom-out w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-minus"></i></button>
+            <button class="mermaid-zoom-reset w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-expand"></i></button>
+            <div class="w-px h-4 bg-slate-700 mx-0.5"></div>
+            <button class="mermaid-download-svg w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition text-xs" title="Download SVG"><i class="fa-solid fa-download"></i></button>
+            <button class="mermaid-download-png w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition text-xs" title="Download PNG"><i class="fa-solid fa-image"></i></button>
+        `;
+    wrapper.style.position = 'relative';
+    wrapper.insertBefore(controls, mermaidEl);
+
+    let zoom = 1;
+    controls.querySelector('.mermaid-zoom-in').addEventListener('click', () => {
+        zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
+        mermaidEl.style.transform = `scale(${zoom})`;
+        mermaidEl.style.transformOrigin = 'top left';
+        controls.querySelector('.mermaid-zoom-reset').querySelector('i').className = 'fa-solid fa-expand';
+    });
+    controls.querySelector('.mermaid-zoom-out').addEventListener('click', () => {
+        zoom = Math.max(ZOOM_MIN, zoom - ZOOM_STEP);
+        mermaidEl.style.transform = `scale(${zoom})`;
+        mermaidEl.style.transformOrigin = 'top left';
+    });
+    controls.querySelector('.mermaid-zoom-reset').addEventListener('click', () => {
+        zoom = 1;
+        mermaidEl.style.transform = 'scale(1)';
+        mermaidEl.style.transformOrigin = 'top left';
+    });
+    controls.querySelector('.mermaid-download-svg').addEventListener('click', () => {
+        const svgEl = mermaidEl.querySelector('svg');
+        if (!svgEl) return;
+        const svgData = new XMLSerializer().serializeToString(svgEl);
+        const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = url; a.download = 'mermaid-diagram.svg'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    });
+    controls.querySelector('.mermaid-download-png').addEventListener('click', () => {
+        const svgEl = mermaidEl.querySelector('svg');
+        if (!svgEl) return;
+        const svgData = new XMLSerializer().serializeToString(svgEl);
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const domURL = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
+        img.onload = () => {
+            canvas.width = img.width * 2; canvas.height = img.height * 2;
+            ctx.scale(2, 2); ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob), a = document.createElement('a');
+                a.href = url; a.download = 'mermaid-diagram.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                URL.revokeObjectURL(domURL);
+            }, 'image/png');
+        };
+        img.src = domURL;
     });
 }
 
@@ -296,7 +324,39 @@ async function renderPrd(markdownText) {
     showSkeleton();
     hideSkeleton();
     if (prdPreview) prdPreview.innerHTML = marked.parse(generatedMarkdown);
-    try { if (typeof mermaid !== 'undefined') { await mermaid.run({ nodes: prdPreview.querySelectorAll('.language-mermaid, pre code.language-mermaid') }); addMermaidControls(prdPreview); } } catch (e) { console.warn('Mermaid warn', e); }
+
+    if (typeof mermaid !== 'undefined' && prdPreview) {
+        const blocks = Array.from(prdPreview.querySelectorAll('.language-mermaid, pre code.language-mermaid'));
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            const preEl = block.closest('pre') || block;
+            const rawCode = block.textContent || '';
+            const cleanCode = cleanMermaidCode(rawCode);
+            const containerId = 'mermaid-svg-' + Date.now() + '-' + i;
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mermaid-wrapper my-6 bg-slate-900/90 border border-slate-800 rounded-xl p-4 overflow-x-auto shadow-md';
+
+            try {
+                const { svg } = await mermaid.render(containerId, cleanCode);
+                wrapper.innerHTML = `<div class="mermaid flex justify-center">${svg}</div>`;
+                preEl.replaceWith(wrapper);
+                addMermaidControls(wrapper);
+            } catch (e) {
+                console.warn('Mermaid render warning:', e);
+                const errDiv = document.getElementById(containerId);
+                if (errDiv) errDiv.remove();
+                wrapper.innerHTML = `
+                    <div class="flex items-center justify-between text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-lg mb-2">
+                        <span class="font-medium"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Diagram Code (Syntax Warning)</span>
+                    </div>
+                    <pre class="text-xs text-slate-300 font-mono bg-slate-950 p-3 rounded-lg overflow-x-auto"><code>${escapeHtml(cleanCode)}</code></pre>
+                `;
+                preEl.replaceWith(wrapper);
+            }
+        }
+    }
+
     if (codeOutput) { codeOutput.textContent = generatedMarkdown; if (typeof Prism !== 'undefined') Prism.highlightElement(codeOutput); }
     if (tabPreview) tabPreview.click();
     if (floatingToolbar) floatingToolbar.classList.remove('hidden');
