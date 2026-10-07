@@ -135,6 +135,35 @@
             padding: 0;
             color: inherit;
         }
+
+        .mermaid-wrapper:fullscreen {
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 1.5rem;
+            overflow: auto;
+        }
+
+        .mermaid-wrapper:fullscreen .mermaid-controls {
+            align-self: center;
+            margin-bottom: 1rem;
+        }
+
+        .mermaid-wrapper:fullscreen .mermaid {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-wrapper:fullscreen svg {
+            width: 100%;
+            height: 100%;
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
     </style>
 </head>
 
@@ -448,7 +477,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script
         src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="./app.js?v=5"></script>
+    <script src="./app.js?v=8"></script>
 </body>
 
 </html>

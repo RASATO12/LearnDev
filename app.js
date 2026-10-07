@@ -77,7 +77,7 @@ if (installBtn) {
     });
 }
 
-// Collapsible panel — desktop only (mobile uses tab nav)
+// Collapsible panel â€” desktop only (mobile uses tab nav)
 const isDesktop = () => window.matchMedia('(min-width: 768px)').matches;
 function applyPanelState() {
     const cIcon = btnCollapse?.querySelector('.fa-arrows-left-right');
@@ -100,7 +100,7 @@ if (btnCollapse) btnCollapse.addEventListener('click', () => { isPanelCollapsed 
 window.addEventListener('resize', () => { if (!isDesktop() && isPanelCollapsed) applyPanelState(); });
 applyPanelState();
 
-// Template buttons — fill textarea, clear highlight on manual edit
+// Template buttons â€” fill textarea, clear highlight on manual edit
 function highlightTemplate(active) {
     templateButtons.forEach(b => {
         const on = b.dataset.template === active;
@@ -375,12 +375,12 @@ function addMermaidControls(wrapper) {
     const controls = document.createElement('div');
     controls.className = 'mermaid-controls flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-lg p-1 mb-2 shadow-lg shadow-black/30';
     controls.innerHTML = `
-            <button class="mermaid-zoom-in w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-plus"></i></button>
-            <button class="mermaid-zoom-out w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-minus"></i></button>
-            <button class="mermaid-zoom-reset w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs"><i class="fa-solid fa-expand"></i></button>
+            <button class="mermaid-zoom-in w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+            <button class="mermaid-zoom-out w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+            <button class="mermaid-fullscreen w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition text-xs" title="Fullscreen Preview"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
             <div class="w-px h-4 bg-slate-700 mx-0.5"></div>
             <button class="mermaid-download-svg w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition text-xs" title="Download SVG"><i class="fa-solid fa-download"></i></button>
-            <button class="mermaid-download-png w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition text-xs" title="Download PNG"><i class="fa-solid fa-image"></i></button>
+            <button class="mermaid-download-png w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition text-xs" title="Download JPG / PNG"><i class="fa-solid fa-image"></i></button>
         `;
     wrapper.style.position = 'relative';
     wrapper.insertBefore(controls, mermaidEl);
@@ -390,18 +390,13 @@ function addMermaidControls(wrapper) {
         zoom = Math.min(ZOOM_MAX, zoom + ZOOM_STEP);
         mermaidEl.style.transform = `scale(${zoom})`;
         mermaidEl.style.transformOrigin = 'top left';
-        controls.querySelector('.mermaid-zoom-reset').querySelector('i').className = 'fa-solid fa-expand';
     });
     controls.querySelector('.mermaid-zoom-out').addEventListener('click', () => {
         zoom = Math.max(ZOOM_MIN, zoom - ZOOM_STEP);
         mermaidEl.style.transform = `scale(${zoom})`;
         mermaidEl.style.transformOrigin = 'top left';
     });
-    controls.querySelector('.mermaid-zoom-reset').addEventListener('click', () => {
-        zoom = 1;
-        mermaidEl.style.transform = 'scale(1)';
-        mermaidEl.style.transformOrigin = 'top left';
-    });
+    controls.querySelector('.mermaid-fullscreen').addEventListener('click', () => openMermaidFullscreen(mermaidEl));
     controls.querySelector('.mermaid-download-svg').addEventListener('click', () => {
         const svgEl = mermaidEl.querySelector('svg');
         if (!svgEl) return;
@@ -410,30 +405,102 @@ function addMermaidControls(wrapper) {
         const url = URL.createObjectURL(blob), a = document.createElement('a');
         a.href = url; a.download = 'mermaid-diagram.svg'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     });
-    controls.querySelector('.mermaid-download-png').addEventListener('click', () => {
-        const svgEl = mermaidEl.querySelector('svg');
-        if (!svgEl) return;
-        const svgData = new XMLSerializer().serializeToString(svgEl);
-        const img = new Image();
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const domURL = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
-        img.onload = () => {
-            canvas.width = img.width * 2; canvas.height = img.height * 2;
-            ctx.scale(2, 2); ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+    controls.querySelector('.mermaid-download-png').addEventListener('click', () => chooseMermaidDownload(mermaidEl));
+}
+
+// Renders the diagram offscreen with htmlLabels disabled so the SVG contains
+// no <foreignObject> Ã¢â‚¬â€ the element that taints the canvas and blocks toBlob().
+// On-screen rendering keeps htmlLabels enabled; only the export copy is plain SVG.
+async function downloadRaster(wrapper, format) {
+    const code = wrapper && wrapper.dataset.mermaidCode;
+    if (!code || typeof mermaid === 'undefined') {
+        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Source diagram tidak tersedia.', background: '#0f172a', color: '#f8fafc', timer: 2500, showConfirmButton: false });
+        return;
+    }
+    const cfg = mermaid.mermaidAPI.getConfig();
+    const prev = { htmlLabels: cfg.htmlLabels, flowchart: { htmlLabels: cfg.flowchart && cfg.flowchart.htmlLabels }, sequence: { textPlacement: cfg.sequence && cfg.sequence.textPlacement } };
+    await mermaid.initialize({ htmlLabels: false, flowchart: { htmlLabels: false }, sequence: { textPlacement: 'inline' } });
+    let svgEl;
+    try {
+        const out = await mermaid.render('export-svg-' + Date.now(), code);
+        const tmp = document.createElement('div');
+        tmp.innerHTML = out.svg;
+        svgEl = tmp.querySelector('svg');
+    } catch (e) {
+        console.warn('Export render failed:', e);
+    } finally {
+        await mermaid.initialize(prev);
+    }
+    if (!svgEl) {
+        Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Gagal merender ulang diagram.', background: '#0f172a', color: '#f8fafc', timer: 2500, showConfirmButton: false });
+        return;
+    }
+
+    const vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+    const w = (vb && vb.width) || 800;
+    const h = (vb && vb.height) || 600;
+    svgEl.setAttribute('width', w);
+    svgEl.setAttribute('height', h);
+    svgEl.style.maxWidth = '';
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const domURL = URL.createObjectURL(new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' }));
+    img.onload = () => {
+        try {
+            canvas.width = w * 2; canvas.height = h * 2;
+            ctx.scale(2, 2); ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+            URL.revokeObjectURL(domURL);
+            const isJpg = format === 'jpg';
             canvas.toBlob((blob) => {
+                if (!blob) return;
                 const url = URL.createObjectURL(blob), a = document.createElement('a');
-                a.href = url; a.download = 'mermaid-diagram.png'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                URL.revokeObjectURL(domURL);
-            }, 'image/png');
-        };
-        img.src = domURL;
+                a.href = url; a.download = isJpg ? 'mermaid-diagram.jpg' : 'mermaid-diagram.png';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Diagram diunduh (${isJpg ? 'JPG' : 'PNG'})!`, background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
+            }, isJpg ? 'image/jpeg' : 'image/png', isJpg ? 0.95 : undefined);
+        } catch (e) {
+            console.warn('Export rasterize failed:', e);
+            URL.revokeObjectURL(domURL);
+            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Diagram ini mengandung elemen (mis. rumus KaTeX) yang diblokir browser dari ekspor gambar.', background: '#0f172a', color: '#f8fafc', timer: 3500, showConfirmButton: false });
+        }
+    };
+    img.onerror = () => { URL.revokeObjectURL(domURL); Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Gagal merasterisasi diagram.', background: '#0f172a', color: '#f8fafc', timer: 2500, showConfirmButton: false }); };
+    img.src = domURL;
+}
+
+async function chooseMermaidDownload(mermaidEl) {
+    const wrapper = mermaidEl.closest('.mermaid-wrapper');
+    if (!wrapper) return;
+    const res = await Swal.fire({
+        title: 'Unduh Diagram',
+        text: 'Pilih format gambar:',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'PNG',
+        denyButtonText: 'JPG',
+        cancelButtonText: 'Batal',
+        background: '#0f172a', color: '#f8fafc',
+        confirmButtonColor: '#4f46e5', denyButtonColor: '#7c3aed', cancelButtonColor: '#64748b'
     });
+    if (res.isConfirmed) downloadRaster(wrapper, 'png');
+    else if (res.isDenied) downloadRaster(wrapper, 'jpg');
+}
+
+function openMermaidFullscreen(mermaidEl) {
+    const wrapper = mermaidEl.closest('.mermaid-wrapper');
+    if (!wrapper) return;
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if ((document.fullscreenElement || document.webkitFullscreenElement) && exit) { exit.call(document); return; }
+    const req = wrapper.requestFullscreen || wrapper.webkitRequestFullscreen;
+    if (req) req.call(wrapper);
 }
 
 async function renderPrd(markdownText) {
     generatedMarkdown = markdownText;
+    if (document.fullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
     if (btnGenerate) btnGenerate.classList.remove('animate-pulse-subtle');
     showSkeleton();
     hideSkeleton();
@@ -455,6 +522,7 @@ async function renderPrd(markdownText) {
 
             const wrapper = document.createElement('div');
             wrapper.className = 'mermaid-wrapper my-6 bg-slate-900/90 border border-slate-800 rounded-xl p-4 overflow-x-auto shadow-md';
+            wrapper.dataset.mermaidCode = cleanCode;
 
             try {
                 const { svg } = await mermaid.render(containerId, cleanCode);
@@ -480,7 +548,7 @@ async function renderPrd(markdownText) {
         codeOutput.textContent = generatedMarkdown;
         if (typeof Prism !== 'undefined') {
             // prism-markdown auto-loads a component for every fence language label;
-            // mermaid pseudo-languages don't exist on cdnjs and 404 — register stand-ins
+            // mermaid pseudo-languages don't exist on cdnjs and 404 â€” register stand-ins
             DIAGRAM_LANGS.forEach(lang => {
                 if (!Prism.languages[lang]) Prism.languages[lang] = Prism.languages.markup || {};
             });
@@ -520,7 +588,7 @@ function copyToClipboard(text) {
     });
 function downloadAgents() {
     if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; }
-    const hdr = `# AGENTS.md — OpenCode & AI Coding Agent Configuration\n# Project: LearnDev Generated Spec\n# Generated: ${new Date().toLocaleString('en-US')}\n\n## CRITICAL EXECUTION RULES\n- Read this file BEFORE any code generation.\n- NEVER output conversational filler.\n- ALL code, architecture, and comments must be production-grade technical English, zero stubs.\n- NO Indonesian or non-English text anywhere in generated specs.\n- Use REAL Unsplash CDN URLs for ALL images.\n\n## AGENTS INSTRUCTION & PRD CONTEXT\n## OpenCode & AI Coding Agent Protocol\n\n---\n\n# PRD SOURCE DOCUMENT\n`;
+    const hdr = `# AGENTS.md â€” OpenCode & AI Coding Agent Configuration\n# Project: LearnDev Generated Spec\n# Generated: ${new Date().toLocaleString('en-US')}\n\n## CRITICAL EXECUTION RULES\n- Read this file BEFORE any code generation.\n- NEVER output conversational filler.\n- ALL code, architecture, and comments must be production-grade technical English, zero stubs.\n- NO Indonesian or non-English text anywhere in generated specs.\n- Use REAL Unsplash CDN URLs for ALL images.\n\n## AGENTS INSTRUCTION & PRD CONTEXT\n## OpenCode & AI Coding Agent Protocol\n\n---\n\n# PRD SOURCE DOCUMENT\n`;
     const blob = new Blob([hdr + generatedMarkdown], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = 'AGENTS.md'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'AGENTS.md diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
@@ -587,7 +655,7 @@ if (btnGenerate) {
             if (concise) dyn += " Strictly output the pure structured Markdown PRD only. No intro, no outro, no conversational AI fluff.";
             if (minimalist) dyn += " Prioritize MVP lean architecture (YAGNI).";
             let uiIns = "";
-            if (uiValFinal && uiValFinal !== 'auto') uiIns = `\n\nSECTION 8 OVERRIDE — UI/UX DESIGN SYSTEM:\nVisual Vibe: ${uiValFinal}.\nColor Tokens HEX spesifik untuk Primary/Secondary/Accent/Background/Surface/Text + Tailwind classes.\nTypography: Inter/Plus Jakarta Sans spesifik.\nComponent: rounded-2xl/3xl, shadow subtle, transition halus.\n`;
+            if (uiValFinal && uiValFinal !== 'auto') uiIns = `\n\nSECTION 8 OVERRIDE â€” UI/UX DESIGN SYSTEM:\nVisual Vibe: ${uiValFinal}.\nColor Tokens HEX spesifik untuk Primary/Secondary/Accent/Background/Surface/Text + Tailwind classes.\nTypography: Inter/Plus Jakarta Sans spesifik.\nComponent: rounded-2xl/3xl, shadow subtle, transition halus.\n`;
             const fullPrompt = `${dyn}${uiIns}\n\nIde Aplikasi: ${pTxt}`;
             btnGenerate.disabled = true; if (generateText) generateText.textContent = 'Generating PRD...'; if (generateSpinner) generateSpinner.classList.remove('hidden');
             showSkeleton();
