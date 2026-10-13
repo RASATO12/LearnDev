@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const fabCopy = el('fabCopy');
     const fabPdf = el('fabPdf');
     const fabAgents = el('fabAgents');
+    const fabDocx = el('fabDocx');
+    const fabShare = el('fabShare');
     const templateButtons = document.querySelectorAll('.template-btn');
 
     // Pulse animation cue on generate button when empty
@@ -50,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const TEMPLATES = {
         ecommerce: "Create a complete PRD for a Mobile E-Commerce application with features:\n- Product catalog with categories and search filters\n- Shopping cart with quantity adjustments and persistent state\n- Multi-payment checkout (COD, bank transfer, e-wallet)\n- User account management with profile and order history\n- Real-time push notifications\n- Admin dashboard for product, order, and sales analytics management\n- Flash sale and voucher discount management system\n- User product reviews and ratings\n- Wishlist and favorite items\n- Chat customer service integration\n\nPrioritize mobile-first UX, fast performance on low bandwidth, and transaction security.",
         saas: "Create a complete PRD for a SaaS Dashboard platform with features:\n- Multi-tenant architecture with data isolation\n- Subscription management (free, pro, enterprise tiers)\n- Billing and invoice automation\n- Real-time analytics dashboard with charts and KPIs\n- User role management (admin, member, viewer)\n- API access management and rate limiting\n- Team collaboration workspace\n- Integrations marketplace (Slack, Zapier, CRM)\n- Audit log and compliance reporting\n- Onboarding wizard and guided setup\n\nFocus on scalability, security-first design, and enterprise-grade reliability.",
-        api: "Create a complete PRD for a REST API Service with features:\n- RESTful endpoint design with versioning (v1, v2)\n- Authentication via OAuth 2.0 + JWT token management\n- Rate limiting and throttling policies\n- Pagination, filtering, sorting, and search\n- Webhook support for event-driven architecture\n- Automated API documentation (OpenAPI/Swagger)\n- Error handling standardization (RFC 7807 Problem Details)\n- Caching strategy (Redis) and CDN integration\n- Monitoring and health check endpoints\n- API gateway configuration and load balancing\n\nStandardize on OpenAPI 3.0 specification, semantic versioning, and backward compatibility."
+        api: "Create a complete PRD for a REST API Service with features:\n- RESTful endpoint design with versioning (v1, v2)\n- Authentication via OAuth 2.0 + JWT token management\n- Rate limiting and throttling policies\n- Pagination, filtering, sorting, and search\n- Webhook support for event-driven architecture\n- Automated API documentation (OpenAPI/Swagger)\n- Error handling standardization (RFC 7807 Problem Details)\n- Caching strategy (Redis) and CDN integration\n- Monitoring and health check endpoints\n- API gateway configuration and load balancing\n\nStandardize on OpenAPI 3.0 specification, semantic versioning, and backward compatibility.",
+        pos: "Create a complete PRD for a POS / Sistem Kasir retail application with features:\n- Product catalog with barcode/QR scan and quick search\n- Cashier cart with item discount, split payment, and cash rounding\n- Multi-payment: cash, card, QRIS/e-wallet, cashless\n- Thermal receipt printing (ESC/POS) and digital receipt via WhatsApp/email\n- Cashier shift management, cash drawer, and end-of-day cash reconciliation (tutup kasir)\n- Sales report: daily revenue, profit margin, best-selling items\n- Inventory & stock management with low-stock alerts and stock opname\n- Voucher, member points, and customer loyalty program\n- Refund and return handling with receipt reference\n- Offline-first with local queue and auto-sync when online\n- Multi-outlet support with per-store roles and consolidated reports\n\nPrioritize checkout speed, offline reliability, and accurate cash handling."
     };
 
 if (uiThemeSelect && uiThemeCustom) {
@@ -118,7 +121,54 @@ templateButtons.forEach(btn => {
         promptInput.focus();
     });
 });
-promptInput?.addEventListener('input', () => { highlightTemplate('custom'); });
+// Autosave draft & restore last session (survives tab close / refresh)
+const LS_DRAFT = 'learndev_draft', LS_LAST = 'learndev_last_prd';
+let draftTimer = null;
+function saveDraft() {
+    try {
+        localStorage.setItem(LS_DRAFT, JSON.stringify({
+            prompt: promptInput?.value || '',
+            provider: aiProvider?.value || '',
+            theme: uiThemeSelect?.value || 'auto',
+            themeCustom: uiThemeCustom?.value || ''
+        }));
+    } catch (e) { }
+}
+function loadDraft() {
+    try {
+        const d = JSON.parse(localStorage.getItem(LS_DRAFT)) || {};
+        if (d.prompt && promptInput) promptInput.value = d.prompt;
+        if (d.provider && aiProvider) aiProvider.value = d.provider;
+        if (d.theme && uiThemeSelect) uiThemeSelect.value = d.theme;
+        if (d.themeCustom && uiThemeCustom) {
+            uiThemeCustom.value = d.themeCustom;
+            if (d.theme === 'custom') uiThemeCustom.classList.remove('hidden');
+        }
+    } catch (e) { }
+}
+promptInput?.addEventListener('input', () => { highlightTemplate('custom'); clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); });
+aiProvider?.addEventListener('change', saveDraft);
+uiThemeSelect?.addEventListener('change', saveDraft);
+uiThemeCustom?.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); });
+loadDraft();
+
+// Restore last generated PRD, or load one shared via #prd=<encoded> link
+(async () => {
+    if (location.hash.startsWith('#prd=')) {
+        const enc = location.hash.slice(5);
+        try {
+            await renderPrd(await decompressFromB64url(enc));
+            Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'PRD dibuka dari tautan bagikan.', background: '#0f172a', color: '#f8fafc', timer: 2500, showConfirmButton: false });
+            return;
+        } catch (e) {
+            try { await renderPrd(decodeURIComponent(enc)); return; } catch (e2) { console.warn('Share link decode failed:', e2); }
+        }
+    }
+    try {
+        const last = JSON.parse(localStorage.getItem(LS_LAST));
+        if (last && last.md) await renderPrd(last.md);
+    } catch (e) { }
+})();
 
 const getGeminiKey = () => localStorage.getItem('learndev_gemini_key') || '';
 const setGeminiKey = (k) => localStorage.setItem('learndev_gemini_key', k.trim());
@@ -240,6 +290,16 @@ function cleanMermaidCode(code) {
         .replace(/```mermaid/gi, '')
         .replace(/```/g, '')
         .trim();
+
+    // LLMs sometimes omit the mandatory diagram-type line; sniff the body and
+    // prepend the right one so mermaid detects the type — and the repair
+    // branches below (gated on that header) also run.
+    const MERMAID_TYPES = /^(graph|flowchart|erDiagram|sequenceDiagram|classDiagram|stateDiagram|pie|gantt|journey|gitGraph)\b/i;
+    if (cleaned && !MERMAID_TYPES.test(cleaned)) {
+        const isFlowchart = /-->|---|==>|-\.->|\[[^\]]*["']/.test(cleaned);
+        const isEr = !isFlowchart && (/(?:\|\||\}o|o\{|\|\{|\}\|)/.test(cleaned) || /^[A-Za-z_]\w*\s*\{/m.test(cleaned) || /\b(?:PK|FK)\b/.test(cleaned));
+        cleaned = (isEr ? 'erDiagram' : 'graph TD') + '\n' + cleaned;
+    }
 
     if (cleaned.startsWith('graph') || cleaned.startsWith('flowchart')) {
         // LLM often packs all relations onto one line; split before every
@@ -579,6 +639,35 @@ function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Disalin!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }));
 }
 
+// Share via instant link: PRD compressed with native CompressionStream -> #prd=<base64url>
+async function compressToB64url(text) {
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function decompressFromB64url(b64) {
+    const bin = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return await new Response(stream).text();
+}
+async function sharePrdLink() {
+    if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk dibagikan!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; }
+    try {
+        const enc = (typeof CompressionStream !== 'undefined') ? await compressToB64url(generatedMarkdown) : encodeURIComponent(generatedMarkdown);
+        const url = `${location.origin}${location.pathname}#prd=${enc}`;
+        await navigator.clipboard.writeText(url);
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Tautan disalin! Bagikan ke tim.', background: '#0f172a', color: '#f8fafc', timer: 2500, showConfirmButton: false });
+    } catch (e) {
+        console.warn('Share failed:', e);
+        Swal.fire({ icon: 'error', title: 'Gagal membuat tautan', text: 'Browser memblokir clipboard atau tidak mendukung kompresi native. Salin PRD sebagai markdown sebagai gantinya.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#4f46e5' });
+    }
+}
+if (fabShare) fabShare.addEventListener('click', sharePrdLink);
+
     if (fabCopy) fabCopy.addEventListener('click', () => { if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; } copyToClipboard(generatedMarkdown); });
     if (fabPdf) fabPdf.addEventListener('click', () => {
         if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; }
@@ -586,6 +675,18 @@ function copyToClipboard(text) {
         const opt = { margin: 10, filename: 'PRD-LearnDev.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
         html2pdf().set(opt).from(prdPreview).save();
     });
+
+// DOCX export: markdown -> HTML blob (application/msword), opens editable in Word/LibreOffice/Docs
+function downloadDocx() {
+    if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; }
+    const body = marked.parse(generatedMarkdown);
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;line-height:1.5;color:#0f172a}h1{font-size:20pt;border-bottom:1px solid #cbd5e1;padding-bottom:4pt}h2{font-size:14pt;color:#1e293b}h3{font-size:12pt}p{margin:0 0 8pt}pre{background:#f1f5f9;padding:8pt;font-family:Consolas,monospace;font-size:9pt}code{font-family:Consolas,monospace}table{border-collapse:collapse;margin:0 0 8pt}td,th{border:1px solid #94a3b8;padding:4pt 8pt}th{background:#e2e8f0}</style></head><body>${body}</body></html>`;
+    const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = 'PRD-LearnDev.doc'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'DOCX diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
+}
+if (fabDocx) fabDocx.addEventListener('click', downloadDocx);
 function downloadAgents() {
     if (!generatedMarkdown) { Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Belum ada PRD untuk diunduh!', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false }); return; }
     const hdr = `# AGENTS.md â€” OpenCode & AI Coding Agent Configuration\n# Project: LearnDev Generated Spec\n# Generated: ${new Date().toLocaleString('en-US')}\n\n## CRITICAL EXECUTION RULES\n- Read this file BEFORE any code generation.\n- NEVER output conversational filler.\n- ALL code, architecture, and comments must be production-grade technical English, zero stubs.\n- NO Indonesian or non-English text anywhere in generated specs.\n- Use REAL Unsplash CDN URLs for ALL images.\n\n## AGENTS INSTRUCTION & PRD CONTEXT\n## OpenCode & AI Coding Agent Protocol\n\n---\n\n# PRD SOURCE DOCUMENT\n`;
@@ -628,6 +729,13 @@ const BASE_PRD_SYSTEM_PROMPT = `You are an expert Lead Product Manager and Syste
     string userId FK
     string audioFileName "Name of the audio file"
   }
+
+## 8. UI/UX Design System (Component Spec)
+- Specify every screen's interface using CONCRETE shadcn/ui component names (React + Tailwind CSS + Radix UI primitives). Only use names from this list: Button, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Input, Label, Textarea, Select, Checkbox, Switch, Badge, Avatar, Alert, AlertDialog, Dialog, Sheet, Drawer, Tabs, Tooltip, DropdownMenu, Popover, HoverCard, Command, Form (react-hook-form + Zod), Sonner (toast), Skeleton, ScrollArea, Separator, Accordion, Calendar, DataTable (TanStack Table), Chart (Recharts).
+- For each key screen, give the component stack as ONE bullet, e.g. "- Dashboard: Card > CardHeader(CardTitle, CardDescription) + Chart + DataTable with DropdownMenu row actions".
+- When a composite block is needed (login form, app sidebar, dashboard layout, pricing), cite the 21st.dev registry as the inspiration source by block category only. NEVER invent or output URLs.
+- Include design tokens: Tailwind color roles (primary, secondary, muted, accent, destructive, border, ring), border radius scale, spacing scale, and dark-mode behavior.
+- NEVER output raw JSX/TSX code. Only the component-name spec above.
 
 ## OUTPUT
 Generate pure structured Markdown PRD ONLY. Absolutely NO intro, NO outro, NO conversational filler, NO Indonesian text.`;
@@ -672,7 +780,9 @@ if (btnGenerate) {
             }
             if (!raw) throw last || new Error('Semua model sibuk');
             let md = raw.replace(/^```markdown\n/i, '').replace(/^```md\n/i, '').replace(/```$/, '').trim();
-            saveHistoryItem(prompt, md); await renderPrd(md);
+            saveHistoryItem(prompt, md);
+            localStorage.setItem(LS_LAST, JSON.stringify({ md, prompt, ts: Date.now() }));
+            await renderPrd(md);
             Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'PRD berhasil digenerate.', background: '#0f172a', color: '#f8fafc', timer: 1500, showConfirmButton: false });
         } catch (err) {
             console.error("Generate Error:", err);

@@ -272,6 +272,9 @@
                     <button type="button" data-template="api"
                         class="template-btn px-3 py-1.5 text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:border-indigo-500 hover:text-indigo-400 transition min-h-[32px]">REST
                         API Service</button>
+                    <button type="button" data-template="pos"
+                        class="template-btn px-3 py-1.5 text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:border-indigo-500 hover:text-indigo-400 transition min-h-[32px]">Sistem
+                        Kasir / POS</button>
                     <button type="button" data-template="custom"
                         class="template-btn px-3 py-1.5 text-xs font-medium bg-indigo-600 border border-indigo-500 text-white rounded-lg hover:bg-indigo-500 transition min-h-[32px]">Custom</button>
                 </div>
@@ -462,10 +465,20 @@
                             title="Unduh PDF">
                             <i class="fa-solid fa-file-pdf text-sm"></i>
                         </button>
+                        <button id="fabDocx"
+                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-sky-400 border border-slate-700/60 transition-all duration-200 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                            title="Unduh DOCX">
+                            <i class="fa-solid fa-file-word text-sm"></i>
+                        </button>
                         <button id="fabAgents"
                             class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                             title="Unduh AGENTS.md">
                             <i class="fa-solid fa-robot text-sm"></i>
+                        </button>
+                        <button id="fabShare"
+                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                            title="Bagikan via Tautan">
+                            <i class="fa-solid fa-share-nodes text-sm"></i>
                         </button>
                     </div>
                 </div>
@@ -477,7 +490,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script
         src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="./app.js?v=8"></script>
+    <script src="./app.js?v=10"></script>
 </body>
 
 </html>
