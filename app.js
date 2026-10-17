@@ -303,10 +303,14 @@ function cleanMermaidCode(code) {
 
     if (cleaned.startsWith('graph') || cleaned.startsWith('flowchart')) {
         // LLM often packs all relations onto one line; split before every
-        // "NodeId[" or "NodeId -->" that follows a node ref / closing bracket
+        // "NodeId[" or "NodeId -->" that follows a node ref / closing bracket / quote
         // (never after "|", ">" or "-", so arrow targets and labels stay intact)
         cleaned = cleaned.replace(
-            /([\]\)]|[A-Za-z0-9_])(\s+)(?=[A-Za-z][A-Za-z0-9_]*(?:\[|\s*(?:-->|---|-\.->|==>)))/g,
+            /([\]\)])\s*(?=[A-Za-z][A-Za-z0-9_]*(?:\[|\s*(?:-->|---|==>|-\.->)))/g,
+            '$1\n'
+        );
+        cleaned = cleaned.replace(
+            /(["'\]\)]|[A-Za-z0-9_])\s+(?=[A-Za-z][A-Za-z0-9_]*(?:\[|\s*(?:-->|---|==>|-\.->)))/g,
             '$1\n'
         );
 
@@ -314,6 +318,15 @@ function cleanMermaidCode(code) {
         let fixedLines = [];
         for (let line of lines) {
             let l = line.trim();
+            // Convert pseudo-colon syntax: NodeA --> NodeB : "Label" -> NodeA -->|"Label"| NodeB
+            l = l.replace(
+                /^(\s*[A-Za-z0-9_]+(?:\s*\[[^\]]+\]|\s*\([^)]+\)|\s*\{[^}]+\})?)\s*(-->|---|==>|-\.->|->)\s*([A-Za-z0-9_]+(?:\s*\[[^\]]+\]|\s*\([^)]+\)|\s*\{[^}]+\})?)\s*:\s*(.+)$/,
+                (match, from, arrow, to, rawLabel) => {
+                    const cleanLabel = rawLabel.trim().replace(/^["']|["'];?$/g, '').replace(/;$/, '').replace(/"/g, "'").trim();
+                    const normArrow = arrow === '->' ? '-->' : arrow;
+                    return `${from} ${normArrow}|"${cleanLabel}"| ${to}`;
+                }
+            );
             l = l.replace(/(\[[^\]]+\])([A-Za-z0-9_]+)$/, '$1');
             if (l === '-->' || l === '---' || l === '-.-' || !l) continue;
             l = l.replace(/([A-Za-z0-9_]+)\[([^\]]*)$/, (match, id, text) => {
@@ -705,6 +718,7 @@ const BASE_PRD_SYSTEM_PROMPT = `You are an expert Lead Product Manager and Syste
 - ONE relation per line. NEVER pack multiple relations onto a single line.
 - Node IDs must be simple alphanumeric without spaces (e.g. A, B, C, D).
 - Always wrap node labels in double quotes inside brackets: Node["Label text"]. Never leave brackets unclosed or truncated.
+- NEVER use colon syntax like A --> B : "label". ALWAYS use pipe syntax: A -->|"label"| B.
 - Example of CORRECT diagram structure:
   graph TD
     A["App Launch"] -->|"Select Mode"| B["Game Menu"]
