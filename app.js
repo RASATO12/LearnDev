@@ -175,8 +175,7 @@ function applyPanelState() {
     }
     localStorage.setItem('learndev_panel_collapsed', isPanelCollapsed);
 }
-if (btnCollapse) btnCollapse.addEventListener('click', () => { isPanelCollapsed = !isPanelCollapsed; applyPanelState(); });
-window.addEventListener('resize', () => { if (!isDesktop() && isPanelCollapsed) applyPanelState(); });
+if (btnCollapse) btnCollapse.addEventListener('click', () => { isPanelCollapsed = !isPanelCollapsed; applyPanelState(); window.addEventListener('resize', () => { if (!isDesktop() && isPanelCollapsed) applyPanelState(); });
 applyPanelState();
 
 });
@@ -881,3 +880,4 @@ if (btnGenerate) {
 }
 
 console.log('LearnDev App initialized successfully');
+});

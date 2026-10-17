@@ -1,0 +1,182 @@
+﻿    console.log("LearnDev Engine Initialized");
+    try { if (typeof mermaid !== 'undefined') mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose', suppressErrorRendering: true }); } catch (e) { }
+    try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) { }
+
+    const el = (id) => document.getElementById(id);
+    const aiProvider = el('aiProvider');
+    const promptInput = el('promptInput');
+    const uiThemeSelect = el('uiTheme');
+    const uiThemeCustom = el('uiThemeCustom');
+    const btnGenerate = el('btnGenerate');
+    const btnHistory = el('btnHistory');
+    const btnApiKey = el('btnApiKey');
+    const btnSettings = el('btnSettings');
+    const btnCollapse = el('btnCollapse');
+    const installBtn = el('installBtn');
+    const tabPreview = el('tabPreview');
+    const tabCode = el('tabCode');
+    const previewContainer = el('previewContainer');
+    const codeContainer = el('codeContainer');
+    const prdPreview = el('prdPreview');
+    const previewEmpty = el('previewEmpty');
+    const skeletonLoader = el('skeletonLoader');
+    const codeOutput = el('codeOutput');
+    const generateText = el('generateText');
+    const generateSpinner = el('generateSpinner');
+    const panelConfig = el('panel-config');
+    const panelResult = el('panel-result');
+    const mobTabConfig = el('mob-tab-config');
+    const mobTabResult = el('mob-tab-result');
+    const floatingToolbar = el('floatingToolbar');
+    const fabCopy = el('fabCopy');
+    const fabPdf = el('fabPdf');
+    const fabAgents = el('fabAgents');
+    const fabDocx = el('fabDocx');
+    const fabShare = el('fabShare');
+
+    // Pulse animation cue on generate button when empty
+    if (btnGenerate && previewEmpty) {
+        btnGenerate.classList.add('animate-pulse-subtle');
+    }
+
+    let generatedMarkdown = '';
+    let deferredPrompt = null;
+    let isPanelCollapsed = localStorage.getItem('learndev_panel_collapsed') === 'true';
+    let currentZoomLevel = 1;
+    const ZOOM_STEP = 0.25;
+    const ZOOM_MIN = 0.5;
+    const ZOOM_MAX = 3;
+
+// ---------- Smart Context Detection ----------
+const DOMAIN_KEYWORDS = {
+    pos: ['pos', 'kasir', 'cashier', 'retail', 'transaksi', 'struk', 'sku', 'barcode', 'qrisk', 'tunai', 'pembayaran', 'inventory', 'stok', 'gudang', 'penjualan'],
+    ecommerce: ['ecommerce', 'e-commerce', 'toko online', 'belanja', 'produk', 'keranjang', 'checkout', 'pembelian', 'marketplace', 'pesanan'],
+    saas: ['saas', 'software as a service', 'dashboard', 'langganan', 'subscription', 'multi-tenant', 'billing', 'invoice', 'api', 'enterprise'],
+    kanban: ['kanban', 'task', 'tugas', 'board', 'board tugas', 'project management', 'manajemen proyek', 'workflow', 'papan'],
+    portfolio: ['portfolio', 'portofolio', 'personal website', 'situs pribadi', 'resume', 'cv', 'showcase', 'galeri karya'],
+    crm: ['crm', 'customer relationship', 'pelanggan', 'kontak', 'lead', 'prospek', 'pipeline sales', 'pipelines'],
+};
+function detectDomainContext(prompt) {
+    const p = prompt.toLowerCase();
+    for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+        const hits = keywords.filter(k => p.includes(k));
+        if (hits.length >= 2) return { domain, hints: hits };
+    }
+    return { domain: null, hints: [] };
+}
+function domainContextHint(ctx) {
+    if (!ctx.domain) return '';
+    const hints = {
+        pos: 'Sertakan modul: katalog produk dengan barcode/SKU, keranjang kasir, pembayaran tunai/card/QRIS, cetak struk thermal (ESC/POS), pengembalian uang (kembalian), pencarian SKU, manajemen stok, laporan penjualan harian, dan reconciliasi tutup kasir.',
+        ecommerce: 'Sertakan modul: katalog produk dengan kategori, keranjang belanja, multi-payment checkout, manajemen akun user, notifikasi push, admin dashboard produk & penjualan, ulasan produk, dan wishlist.',
+        saas: 'Sertakan modul: multi-tenant, manajemen langganan (free/pro/enterprise), billing otomatis, real-time analytics, manajemen peran user, API access, integrasi marketplace, audit log, dan onboarding wizard.',
+        kanban: 'Sertakan modul: papan tugas (board), manajemen task, alur kerja (workflow), penugasan anggota, tanggal jatuh tempo, dan pelacakan progres proyek.',
+        portfolio: 'Sertakan modul: halaman profil, galeri karya, daftar proyek, testimoni, kontak, dan resume/CV download.',
+        crm: 'Sertakan modul: manajemen kontak pelanggan, tracking lead, pipeline penjualan, interaksi pelanggan, dan laporan konversi.'
+    };
+    return '\\n\\nDOMAIN DETECTED: ' + ctx.domain + ' (kunci: ' + ctx.hints.join(', ') + ')\\n' + (hints[ctx.domain] || '');
+}
+
+// ---------- Live Progress Steps ----------
+const progressStepsText = [
+    '[1/4] Analyzing App Context & Requirements...',
+    '[2/4] Injecting Design Tokens & Unsplash Real Assets...',
+    '[3/4] Generating Architecture & Database Schema...',
+    '[4/4] Validating Mermaid Diagrams & Finalizing AGENTS.md...'
+];
+let progressInterval = null;
+function showProgressStep(stepIndex) {
+    const panel = el('progressSteps');
+    const stepText = el('progressStepText');
+    const bar = el('progressBar');
+    const list = el('progressStepsList');
+    if (!panel) return;
+    panel.classList.remove('hidden');
+    if (stepText) stepText.textContent = progressStepsText[stepIndex] || '';
+    if (bar) bar.style.width = Math.round(((stepIndex + 1) / 4) * 100) + '%';
+    if (list) {
+        Array.from(list.children).forEach((child, idx) => {
+            const num = child.querySelector('span:first-child');
+            const label = child.querySelector('span:last-child');
+            if (idx === stepIndex) {
+                num.className = 'w-6 h-6 rounded-full bg-indigo-500 text-xs font-bold text-white flex items-center justify-center';
+                label.className = 'text-xs text-indigo-300 font-medium';
+                child.querySelector('div')?.classList.replace('bg-slate-700', 'bg-indigo-500');
+            } else if (idx < stepIndex) {
+                num.className = 'w-6 h-6 rounded-full bg-emerald-500 text-xs font-bold text-white flex items-center justify-center';
+                label.className = 'text-xs text-emerald-200';
+                child.querySelector('div')?.classList.replace('bg-slate-700', 'bg-emerald-500');
+            } else {
+                num.className = 'w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center';
+                label.className = 'text-xs text-slate-500';
+                child.querySelector('div')?.classList.replace('bg-indigo-500', 'bg-slate-700');
+            }
+        });
+    }
+}
+function hideProgress() {
+    const panel = el('progressSteps');
+    if (panel) panel.classList.add('hidden');
+    if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+}
+function startProgressAnimation() {
+    hideProgress();
+    let idx = 0;
+    showProgressStep(idx);
+    progressInterval = setInterval(() => {
+        idx = (idx + 1) % 4;
+        showProgressStep(idx);
+    }, 900);
+}
+
+
+
+if (uiThemeSelect && uiThemeCustom) {
+    uiThemeSelect.addEventListener('change', () => {
+        if (uiThemeSelect.value === 'custom') { uiThemeCustom.classList.remove('hidden'); uiThemeCustom.focus(); }
+        else { uiThemeCustom.classList.add('hidden'); uiThemeCustom.value = ''; }
+    });
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => { }); });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); deferredPrompt = e;
+    if (installBtn) { installBtn.classList.remove('hidden'); installBtn.classList.add('flex'); }
+});
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') installBtn.classList.add('hidden');
+        deferredPrompt = null;
+    });
+}
+
+// Collapsible panel A¢â,¬â?? desktop only (mobile uses tab nav)
+const isDesktop = () => window.matchMedia('(min-width: 768px)').matches;
+function applyPanelState() {
+    const cIcon = btnCollapse?.querySelector('.fa-arrows-left-right');
+    const xIcon = btnCollapse?.querySelector('.fa-xmark');
+    if (isPanelCollapsed && isDesktop()) {
+        panelConfig.classList.add('md:!hidden');
+        panelResult.classList.remove('md:col-span-7', 'xl:col-span-8');
+        panelResult.classList.add('md:col-span-12');
+        cIcon?.classList.add('hidden'); xIcon?.classList.remove('hidden');
+    } else {
+        panelConfig.classList.remove('md:!hidden');
+        panelResult.classList.add('md:col-span-7', 'xl:col-span-8');
+        panelResult.classList.remove('md:col-span-12');
+        xIcon?.classList.add('hidden'); cIcon?.classList.remove('hidden');
+        if (!isDesktop()) { isPanelCollapsed = false; }
+    }
+    localStorage.setItem('learndev_panel_collapsed', isPanelCollapsed);
+}
+if (btnCollapse) btnCollapse.addEventListener('click', () => { isPanelCollapsed = !isPanelCollapsed; applyPanelState(); });
+window.addEventListener('resize', () => { if (!isDesktop() && isPanelCollapsed) applyPanelState(); });
+applyPanelState();
+
+});
+// Autosave draft & restore last session (survives tab close / refresh)
