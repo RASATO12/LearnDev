@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fabAgents = el('fabAgents');
     const fabDocx = el('fabDocx');
     const fabShare = el('fabShare');
-    const templateButtons = document.querySelectorAll('.template-btn');
 
     // Pulse animation cue on generate button when empty
     if (btnGenerate && previewEmpty) {
@@ -49,12 +48,89 @@ document.addEventListener('DOMContentLoaded', () => {
     const ZOOM_MIN = 0.5;
     const ZOOM_MAX = 3;
 
-const TEMPLATES = {
-        ecommerce: "Create a complete PRD for a Mobile E-Commerce application with features:\n- Product catalog with categories and search filters\n- Shopping cart with quantity adjustments and persistent state\n- Multi-payment checkout (COD, bank transfer, e-wallet)\n- User account management with profile and order history\n- Real-time push notifications\n- Admin dashboard for product, order, and sales analytics management\n- Flash sale and voucher discount management system\n- User product reviews and ratings\n- Wishlist and favorite items\n- Chat customer service integration\n\nPrioritize mobile-first UX, fast performance on low bandwidth, and transaction security.",
-        saas: "Create a complete PRD for a SaaS Dashboard platform with features:\n- Multi-tenant architecture with data isolation\n- Subscription management (free, pro, enterprise tiers)\n- Billing and invoice automation\n- Real-time analytics dashboard with charts and KPIs\n- User role management (admin, member, viewer)\n- API access management and rate limiting\n- Team collaboration workspace\n- Integrations marketplace (Slack, Zapier, CRM)\n- Audit log and compliance reporting\n- Onboarding wizard and guided setup\n\nFocus on scalability, security-first design, and enterprise-grade reliability.",
-        api: "Create a complete PRD for a REST API Service with features:\n- RESTful endpoint design with versioning (v1, v2)\n- Authentication via OAuth 2.0 + JWT token management\n- Rate limiting and throttling policies\n- Pagination, filtering, sorting, and search\n- Webhook support for event-driven architecture\n- Automated API documentation (OpenAPI/Swagger)\n- Error handling standardization (RFC 7807 Problem Details)\n- Caching strategy (Redis) and CDN integration\n- Monitoring and health check endpoints\n- API gateway configuration and load balancing\n\nStandardize on OpenAPI 3.0 specification, semantic versioning, and backward compatibility.",
-        pos: "Create a complete PRD for a POS / Sistem Kasir retail application with features:\n- Product catalog with barcode/QR scan and quick search\n- Cashier cart with item discount, split payment, and cash rounding\n- Multi-payment: cash, card, QRIS/e-wallet, cashless\n- Thermal receipt printing (ESC/POS) and digital receipt via WhatsApp/email\n- Cashier shift management, cash drawer, and end-of-day cash reconciliation (tutup kasir)\n- Sales report: daily revenue, profit margin, best-selling items\n- Inventory & stock management with low-stock alerts and stock opname\n- Voucher, member points, and customer loyalty program\n- Refund and return handling with receipt reference\n- Offline-first with local queue and auto-sync when online\n- Multi-outlet support with per-store roles and consolidated reports\n\nPrioritize checkout speed, offline reliability, and accurate cash handling."
+// ---------- Smart Context Detection ----------
+const DOMAIN_KEYWORDS = {
+    pos: ['pos', 'kasir', 'cashier', 'retail', 'transaksi', 'struk', 'sku', 'barcode', 'qrisk', 'tunai', 'pembayaran', 'inventory', 'stok', 'gudang', 'penjualan'],
+    ecommerce: ['ecommerce', 'e-commerce', 'toko online', 'belanja', 'produk', 'keranjang', 'checkout', 'pembelian', 'marketplace', 'pesanan'],
+    saas: ['saas', 'software as a service', 'dashboard', 'langganan', 'subscription', 'multi-tenant', 'billing', 'invoice', 'api', 'enterprise'],
+    kanban: ['kanban', 'task', 'tugas', 'board', 'board tugas', 'project management', 'manajemen proyek', 'workflow', 'papan'],
+    portfolio: ['portfolio', 'portofolio', 'personal website', 'situs pribadi', 'resume', 'cv', 'showcase', 'galeri karya'],
+    crm: ['crm', 'customer relationship', 'pelanggan', 'kontak', 'lead', 'prospek', 'pipeline sales', 'pipelines'],
+};
+function detectDomainContext(prompt) {
+    const p = prompt.toLowerCase();
+    for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+        const hits = keywords.filter(k => p.includes(k));
+        if (hits.length >= 2) return { domain, hints: hits };
+    }
+    return { domain: null, hints: [] };
+}
+function domainContextHint(ctx) {
+    if (!ctx.domain) return '';
+    const hints = {
+        pos: 'Sertakan modul: katalog produk dengan barcode/SKU, keranjang kasir, pembayaran tunai/card/QRIS, cetak struk thermal (ESC/POS), pengembalian uang (kembalian), pencarian SKU, manajemen stok, laporan penjualan harian, dan reconciliasi tutup kasir.',
+        ecommerce: 'Sertakan modul: katalog produk dengan kategori, keranjang belanja, multi-payment checkout, manajemen akun user, notifikasi push, admin dashboard produk & penjualan, ulasan produk, dan wishlist.',
+        saas: 'Sertakan modul: multi-tenant, manajemen langganan (free/pro/enterprise), billing otomatis, real-time analytics, manajemen peran user, API access, integrasi marketplace, audit log, dan onboarding wizard.',
+        kanban: 'Sertakan modul: papan tugas (board), manajemen task, alur kerja (workflow), penugasan anggota, tanggal jatuh tempo, dan pelacakan progres proyek.',
+        portfolio: 'Sertakan modul: halaman profil, galeri karya, daftar proyek, testimoni, kontak, dan resume/CV download.',
+        crm: 'Sertakan modul: manajemen kontak pelanggan, tracking lead, pipeline penjualan, interaksi pelanggan, dan laporan konversi.'
     };
+    return '\\n\\nDOMAIN DETECTED: ' + ctx.domain + ' (kunci: ' + ctx.hints.join(', ') + ')\\n' + (hints[ctx.domain] || '');
+}
+
+// ---------- Live Progress Steps ----------
+const progressStepsText = [
+    '[1/4] Analyzing App Context & Requirements...',
+    '[2/4] Injecting Design Tokens & Unsplash Real Assets...',
+    '[3/4] Generating Architecture & Database Schema...',
+    '[4/4] Validating Mermaid Diagrams & Finalizing AGENTS.md...'
+];
+let progressInterval = null;
+function showProgressStep(stepIndex) {
+    const panel = el('progressSteps');
+    const stepText = el('progressStepText');
+    const bar = el('progressBar');
+    const list = el('progressStepsList');
+    if (!panel) return;
+    panel.classList.remove('hidden');
+    if (stepText) stepText.textContent = progressStepsText[stepIndex] || '';
+    if (bar) bar.style.width = Math.round(((stepIndex + 1) / 4) * 100) + '%';
+    if (list) {
+        Array.from(list.children).forEach((child, idx) => {
+            const num = child.querySelector('span:first-child');
+            const label = child.querySelector('span:last-child');
+            if (idx === stepIndex) {
+                num.className = 'w-6 h-6 rounded-full bg-indigo-500 text-xs font-bold text-white flex items-center justify-center';
+                label.className = 'text-xs text-indigo-300 font-medium';
+                child.querySelector('div')?.classList.replace('bg-slate-700', 'bg-indigo-500');
+            } else if (idx < stepIndex) {
+                num.className = 'w-6 h-6 rounded-full bg-emerald-500 text-xs font-bold text-white flex items-center justify-center';
+                label.className = 'text-xs text-emerald-200';
+                child.querySelector('div')?.classList.replace('bg-slate-700', 'bg-emerald-500');
+            } else {
+                num.className = 'w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center';
+                label.className = 'text-xs text-slate-500';
+                child.querySelector('div')?.classList.replace('bg-indigo-500', 'bg-slate-700');
+            }
+        });
+    }
+}
+function hideProgress() {
+    const panel = el('progressSteps');
+    if (panel) panel.classList.add('hidden');
+    if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+}
+function startProgressAnimation() {
+    hideProgress();
+    let idx = 0;
+    showProgressStep(idx);
+    progressInterval = setInterval(() => {
+        idx = (idx + 1) % 4;
+        showProgressStep(idx);
+    }, 900);
+}
+
+
 
 if (uiThemeSelect && uiThemeCustom) {
     uiThemeSelect.addEventListener('change', () => {
@@ -103,23 +179,6 @@ if (btnCollapse) btnCollapse.addEventListener('click', () => { isPanelCollapsed 
 window.addEventListener('resize', () => { if (!isDesktop() && isPanelCollapsed) applyPanelState(); });
 applyPanelState();
 
-// Template buttons â€” fill textarea, clear highlight on manual edit
-function highlightTemplate(active) {
-    templateButtons.forEach(b => {
-        const on = b.dataset.template === active;
-        b.classList.toggle('!bg-indigo-600', on);
-        b.classList.toggle('!border-indigo-500', on);
-        b.classList.toggle('!text-white', on);
-    });
-}
-templateButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        const t = btn.dataset.template;
-        if (t === 'custom') { highlightTemplate('custom'); promptInput.value = ''; promptInput.focus(); return; }
-        if (promptInput) promptInput.value = TEMPLATES[t] || '';
-        highlightTemplate(t);
-        promptInput.focus();
-    });
 });
 // Autosave draft & restore last session (survives tab close / refresh)
 const LS_DRAFT = 'learndev_draft', LS_LAST = 'learndev_last_prd';
@@ -146,7 +205,7 @@ function loadDraft() {
         }
     } catch (e) { }
 }
-promptInput?.addEventListener('input', () => { highlightTemplate('custom'); clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); });
+promptInput?.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); });
 aiProvider?.addEventListener('change', saveDraft);
 uiThemeSelect?.addEventListener('change', saveDraft);
 uiThemeCustom?.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); });
@@ -773,7 +832,10 @@ if (btnGenerate) {
             const concise = el('toggle-concise')?.checked ?? true;
             const minimalist = el('toggle-minimalist')?.checked ?? false;
             let pTxt = prompt; if (compress) pTxt = prompt.replace(/\s+/g, ' ').trim();
-            let dyn = BASE_PRD_SYSTEM_PROMPT;
+            
+            const detected = detectDomainContext(prompt);
+            const dyn = BASE_PRD_SYSTEM_PROMPT + domainContextHint(detected);
+
             if (concise) dyn += " Strictly output the pure structured Markdown PRD only. No intro, no outro, no conversational AI fluff.";
             if (minimalist) dyn += " Prioritize MVP lean architecture (YAGNI).";
             let uiIns = "";
@@ -781,6 +843,7 @@ if (btnGenerate) {
             const fullPrompt = `${dyn}${uiIns}\n\nIde Aplikasi: ${pTxt}`;
             btnGenerate.disabled = true; if (generateText) generateText.textContent = 'Generating PRD...'; if (generateSpinner) generateSpinner.classList.remove('hidden');
             showSkeleton();
+            startProgressAnimation();
             if (window.innerWidth < 768 && mobTabResult) mobTabResult.click();
             const selModel = aiProvider?.value || 'gemini-2.5-flash';
             const models = [selModel]; if (!models.includes('gemini-2.5-flash')) models.push('gemini-2.5-flash'); if (!models.includes('gemini-2.5-pro')) models.push('gemini-2.5-pro'); if (!models.includes('gemini-1.5-flash')) models.push('gemini-1.5-flash');
@@ -806,12 +869,15 @@ if (btnGenerate) {
             Swal.fire({ icon: 'error', title: auth ? 'API Key Tidak Valid' : 'Terjadi Kesalahan', text: auth ? 'API Key salah! Periksa konfigurasi.' : ('Gagal generate PRD: ' + err.message), background: '#0f172a', color: '#f8fafc', showCancelButton: true, confirmButtonText: 'OK', cancelButtonText: 'Ubah API Key', confirmButtonColor: '#4f46e5', cancelButtonColor: '#64748b' }).then(r => { if (r.dismiss === Swal.DismissReason.cancel) openApiKeyModal(); });
             if (previewEmpty) previewEmpty.classList.remove('hidden'); if (prdPreview) prdPreview.innerHTML = '';
             if (floatingToolbar) floatingToolbar.classList.add('hidden');
-        }         finally {
-            btnGenerate.disabled = false; if (generateText) generateText.textContent = 'Generate Dokumen PRD'; if (generateSpinner) generateSpinner.classList.add('hidden');
+        } finally {
+            btnGenerate.disabled = false;
+            hideProgress();
+            [fabCopy, fabPdf, fabDocx, fabAgents].forEach(b => { if (b) { b.disabled = false; b.classList.remove('opacity-50', 'pointer-events-none', 'cursor-not-allowed'); b.classList.add('transition-all', 'duration-300'); } });
+            if (generateText) generateText.textContent = 'Generate Dokumen PRD';
+            if (generateSpinner) generateSpinner.classList.add('hidden');
             hideSkeleton();
         }
     });
 }
 
 console.log('LearnDev App initialized successfully');
-});
