@@ -56,7 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // <foreignObject> (HTML inline). SVG yang mengandung foreignObject
             // selalu men-taint canvas saat dirasterisasi (Chrome/Firefox security),
             // sehingga export PNG/JPG mustahil dilakukan.
-            flowchart: { htmlLabels: false },
+            // nodeSpacing/rankSpacing lega + curve linear => edge lurus, minim
+            // lengkungan yang saling menyilang pada flowchart yang rapat.
+            flowchart: { htmlLabels: false, nodeSpacing: 60, rankSpacing: 70, padding: 16, curve: 'linear' },
             sequence: { htmlLabels: false },
             er: { htmlLabels: false },
             state: { htmlLabels: false },
@@ -245,7 +247,7 @@ ATURAN STRUKTUR & INTEGRITAS (MUTLAK):
 1. DILARANG KERAS menyertakan salam pembuka, kata pengantar, sapaan percakapan ("Tentu, saya akan...", "Halo!", "Sebagai seorang..."), atau catatan penutup.
 2. Respons HARUS LANGSUNG DIMULAI pada karakter pertama dengan judul markdown level 1:
 # [Nama Aplikasi / Produk] - Project Requirements Document (PRD)
-3. Diagram Mermaid WAJIB menggunakan sintaks yang valid dan sederhana (flowchart TD atau erDiagram). Gunakan tanda kutip dua untuk teks yang mengandung tanda kurung atau karakter khusus (contoh: ["Frontend (Client)"], STORES ||--o{ USERS : "has"]).
+3. Diagram Mermaid WAJIB menggunakan sintaks yang valid dan sederhana (flowchart TD atau erDiagram). Gunakan tanda kutip dua untuk teks yang mengandung tanda kurung atau karakter khusus (contoh: ["Frontend (Client)"], STORES ||--o{ USERS : "has"). ATURAN LAYOUT FLOWCHART AGAR RAPI (WAJIB): (a) arah edge harus hierarkis top-down — node hanya menunjuk ke level tepat di bawahnya, DILARANG membuat edge yang melompat level atau menunjuk ke node di atasnya (mis: DILARANG A --> C jika B berada di antaranya, hubungkan bertahap A --> B --> C); (b) maksimal 12 node dan maksimal 2 edge keluar dari satu node; (c) label node maksimal 3 kata, singkat dan jelas; (d) jika sistem lebih dari 8 node, wajib mengelompokkan modul menggunakan subgraph; (e) urutkan edge dari kiri ke kanan dalam satu level agar tidak menyilang.
 
 STRUKTUR DOKUMEN:
 # [Nama Aplikasi / Produk] - Project Requirements Document (PRD)
