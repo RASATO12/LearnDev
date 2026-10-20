@@ -1288,7 +1288,7 @@ ${clone.innerHTML}
         });
     }
 
-    // Navbar: PRD History
+    // Navbar: PRD History — hapus satu, beberapa sekaligus (centang), atau semua
     if (btnHistory) {
         btnHistory.addEventListener('click', () => {
             if (!window.Swal) return;
@@ -1304,14 +1304,18 @@ ${clone.innerHTML}
                 });
                 return;
             }
+            openHistoryModal();
+        });
 
+        const openHistoryModal = () => {
             const itemsHtml = () => {
                 const currentHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
                 return currentHistory.map((item, idx) => `
-                    <div class="p-3 bg-slate-800/80 border border-slate-700 rounded-lg text-left mb-2 flex items-center justify-between group" data-idx="${idx}">
-                        <div class="flex-1 min-w-0" onclick="handleHistorySelect('${idx}')">
+                    <div class="px-2.5 py-2 bg-slate-800/80 border border-slate-700 rounded-lg text-left mb-1.5 flex items-center gap-2.5 group" data-idx="${idx}">
+                        <input type="checkbox" class="hist-check w-4 h-4 accent-emerald-500 shrink-0 cursor-pointer" data-idx="${idx}" title="Pilih untuk hapus">
+                        <div class="flex-1 min-w-0 flex items-baseline gap-2" onclick="handleHistorySelect('${idx}')">
                             <div class="text-sm font-semibold text-slate-100 group-hover:text-emerald-400 truncate cursor-pointer">${item.title}</div>
-                            <div class="text-[11px] text-slate-400 mt-1">${item.date}</div>
+                            <div class="text-[10px] text-slate-500 shrink-0">${item.date}</div>
                         </div>
                         <button type="button" class="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded transition" onclick="handleHistoryDelete('${idx}', event)" title="Hapus riwayat">
                             <i class="fa-solid fa-trash-can text-xs"></i>
@@ -1320,22 +1324,131 @@ ${clone.innerHTML}
                 `).join('');
             };
 
-            const renderHistoryList = () => {
-                const container = Swal.getHtmlContainer().querySelector('.max-h-80');
+            // Konfirmasi INLINE di dalam modal yang sama (SweetAlert2 tidak bisa
+            // menumpuk popup: popup konfirmasi akan menutup modal daftar, sehingga
+            // user menyangka datanya sudah terhapus). Daftar tetap dirender di
+            // belakang panel konfirmasi — data jelas aman sampai user menekan Hapus.
+            let pendingAction = null;
+            const askDelete = (title, text, action) => {
+                const container = Swal.getHtmlContainer();
                 if (!container) return;
-                container.innerHTML = `<div class="space-y-2 pr-1">${itemsHtml()}</div>`;
+                pendingAction = action;
+                container.querySelector('#histConfirmTitle').textContent = title;
+                container.querySelector('#histConfirmText').textContent = text;
+                container.querySelector('#histConfirm').classList.remove('hidden');
+                container.querySelector('#histDeleteAll').classList.add('hidden');
+                container.querySelector('#histDeleteSelected').classList.add('hidden');
+                container.querySelector('#histSelectAll').disabled = true;
+                container.querySelectorAll('.hist-check').forEach((cb) => { cb.disabled = true; });
+            };
+            const cancelDelete = () => {
+                const container = Swal.getHtmlContainer();
+                if (!container) return;
+                pendingAction = null;
+                container.querySelector('#histConfirm').classList.add('hidden');
+                container.querySelector('#histDeleteAll').classList.remove('hidden');
+                container.querySelector('#histSelectAll').disabled = false;
+                container.querySelectorAll('.hist-check').forEach((cb) => { cb.disabled = false; });
+                updateBulkBar(Swal.getHtmlContainer());
+            };
+            const updateBulkBar = (container) => {
+                const boxes = Array.from(container.querySelectorAll('.hist-check'));
+                const checked = boxes.filter((c) => c.checked).length;
+                const btnSel = container.querySelector('#histDeleteSelected');
+                if (btnSel) {
+                    btnSel.classList.toggle('hidden', checked === 0);
+                    if (checked > 0) btnSel.textContent = `Hapus Terpilih (${checked})`;
+                }
+                const selAll = container.querySelector('#histSelectAll');
+                if (selAll) selAll.checked = boxes.length > 0 && checked === boxes.length;
+            };
+
+            // Hapus item dari localStorage, lalu refresh daftar IN-PLACE.
+            const removeItems = (selector) => {
+                const cur = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                const updated = cur.filter((_, i) => !selector(i));
+                if (updated.length === 0) {
+                    localStorage.removeItem(HISTORY_KEY);
+                    showToast('info', 'Seluruh riwayat PRD telah dihapus.');
+                } else {
+                    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+                    const container = Swal.getHtmlContainer();
+                    if (container) container.querySelector('#histList').innerHTML = itemsHtml();
+                }
             };
 
             Swal.fire({
                 title: 'Riwayat PRD Tersimpan',
-                html: `<div class="max-h-80 overflow-y-auto pr-1">${itemsHtml()}</div>`,
+                html: `
+                    <div id="histConfirm" class="hidden mb-2 p-2.5 bg-red-600/10 border border-red-500/30 rounded-lg">
+                        <div id="histConfirmTitle" class="text-sm font-semibold text-red-400 mb-0.5">Hapus?</div>
+                        <div id="histConfirmText" class="text-[11px] text-slate-400 mb-2"></div>
+                        <div class="flex gap-1.5 justify-end">
+                            <button type="button" id="histConfirmNo" class="px-2.5 py-1 text-[11px] font-semibold bg-slate-700 text-slate-200 rounded hover:bg-slate-600 transition">Batal</button>
+                            <button type="button" id="histConfirmYes" class="px-2.5 py-1 text-[11px] font-semibold bg-red-600 text-white rounded hover:bg-red-500 transition">Hapus</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-700">
+                        <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" id="histSelectAll" class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"> Pilih Semua
+                        </label>
+                        <div class="flex gap-1.5">
+                            <button type="button" id="histDeleteSelected" class="hidden px-2.5 py-1 text-[11px] font-semibold bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition">Hapus Terpilih</button>
+                            <button type="button" id="histDeleteAll" class="px-2.5 py-1 text-[11px] font-semibold bg-red-600/20 text-red-400 rounded hover:bg-red-600/30 transition">Hapus Semua</button>
+                        </div>
+                    </div>
+                    <div id="histList" class="max-h-80 overflow-y-auto pr-1">${itemsHtml()}</div>`,
                 showCloseButton: true,
                 showConfirmButton: false,
                 background: '#0b0f17',
                 color: '#f8fafc',
                 didOpen: () => {
+                    const container = Swal.getHtmlContainer();
+
+                    container.querySelector('#histList').addEventListener('change', () => updateBulkBar(container));
+
+                    container.querySelector('#histSelectAll').addEventListener('change', (e) => {
+                        container.querySelectorAll('.hist-check').forEach((cb) => { cb.checked = e.target.checked; });
+                        updateBulkBar(container);
+                    });
+
+                    container.querySelector('#histDeleteSelected').addEventListener('click', () => {
+                        const idxs = Array.from(container.querySelectorAll('.hist-check'))
+                            .filter((c) => c.checked)
+                            .map((c) => parseInt(c.dataset.idx));
+                        if (!idxs.length) return;
+                        askDelete(`Hapus ${idxs.length} riwayat terpilih?`, 'Riwayat PRD yang dipilih akan dihapus secara permanen.', () => removeItems((i) => idxs.includes(i)));
+                    });
+
+                    container.querySelector('#histDeleteAll').addEventListener('click', () => {
+                        askDelete('Hapus Semua Riwayat?', 'Seluruh riwayat PRD yang tersimpan di perangkat ini akan dihapus permanen.', () => removeItems(() => true));
+                    });
+
+                    container.querySelector('#histConfirmYes').addEventListener('click', () => {
+                        const action = pendingAction;
+                        pendingAction = null;
+                        if (!action) return;
+                        action();
+                        // Setelah hapus: kembalikan toolbar bila masih ada sisa, atau tutup modal bila kosong
+                        if (localStorage.getItem(HISTORY_KEY)) {
+                            container.querySelector('#histConfirm').classList.add('hidden');
+                            container.querySelector('#histDeleteAll').classList.remove('hidden');
+                            container.querySelector('#histSelectAll').disabled = false;
+                            container.querySelectorAll('.hist-check').forEach((cb) => { cb.disabled = false; cb.checked = false; });
+                            container.querySelector('#histSelectAll').checked = false;
+                            updateBulkBar(container);
+                        } else {
+                            Swal.close();
+                        }
+                    });
+
+                    container.querySelector('#histConfirmNo').addEventListener('click', () => {
+                        cancelDelete();
+                    });
+
                     window.handleHistorySelect = (idx) => {
-                        const selected = history[idx];
+                        const cur = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                        const selected = cur[parseInt(idx)];
                         if (selected) {
                             renderMarkdownPRD(selected.markdown);
                             if (previewEmpty) previewEmpty.classList.add('hidden');
@@ -1350,40 +1463,11 @@ ${clone.innerHTML}
 
                     window.handleHistoryDelete = (idx, e) => {
                         e.stopPropagation();
-                        Swal.fire({
-                            title: 'Hapus Riwayat?',
-                            text: 'Riwayat PRD ini akan dihapus secara permanen.',
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#ef4444',
-                            cancelButtonColor: '#6b7280',
-                            confirmButtonText: 'Hapus',
-                            cancelButtonText: 'Batal',
-                            background: '#0b0f17',
-                            color: '#f8fafc'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                const updated = history.filter((_, i) => i !== parseInt(idx));
-                                localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
-                                renderHistoryList();
-                                if (updated.length === 0) {
-                                    Swal.close();
-                                    Swal.fire({
-                                        title: 'Riwayat Kosong',
-                                        text: 'Seluruh riwayat PRD telah dihapus.',
-                                        icon: 'info',
-                                        timer: 1500,
-                                        showConfirmButton: false,
-                                        background: '#0b0f17',
-                                        color: '#f8fafc'
-                                    });
-                                }
-                            }
-                        });
+                        askDelete('Hapus Riwayat?', 'Riwayat PRD ini akan dihapus secara permanen.', () => removeItems((i) => i === parseInt(idx)));
                     };
                 }
             });
-        });
+        };
     }
 
     console.log('LearnDev PRD Generator Initialized Successfully');
