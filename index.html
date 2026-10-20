@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LearnDev - AI PRD Generator</title>
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css?v=14">
     <link rel="icon" href="./favicon.ico">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -35,10 +35,6 @@
             background: #475569;
         }
 
-        .template-btn {
-            flex-shrink: 0;
-        }
-
         @keyframes pulse-subtle {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
             70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
@@ -64,6 +60,8 @@
             margin-top: 1.5rem;
             margin-bottom: 0.5rem;
             color: #10b981;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 0.5rem;
         }
 
         .markdown-body h3 {
@@ -74,34 +72,16 @@
             color: #34d399;
         }
 
-        .markdown-body p {
+        .markdown-body p, .markdown-body ul, .markdown-body ol {
             margin-bottom: 0.75rem;
             line-height: 1.6;
             color: #94a3b8;
         }
 
-        .markdown-body ul {
-            list-style-type: disc;
-            padding-left: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: #94a3b8;
-        }
-
-        .markdown-body ol {
-            list-style-type: decimal;
-            padding-left: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: #94a3b8;
-        }
-
-        .markdown-body li {
-            margin-bottom: 0.25rem;
-        }
-
-        .markdown-body strong {
-            color: #f8fafc;
-            font-weight: 600;
-        }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; }
+        .markdown-body li { margin-bottom: 0.25rem; }
+        .markdown-body strong { color: #f8fafc; font-weight: 600; }
 
         .markdown-body table {
             width: 100%;
@@ -109,18 +89,14 @@
             margin-bottom: 1rem;
         }
 
-        .markdown-body th,
-        .markdown-body td {
+        .markdown-body th, .markdown-body td {
             border: 1px solid #334155;
             padding: 0.5rem 0.75rem;
             text-align: left;
             color: #94a3b8;
         }
 
-        .markdown-body th {
-            background-color: #1e293b;
-            color: #f8fafc;
-        }
+        .markdown-body th { background-color: #1e293b; color: #f8fafc; }
 
         .markdown-body code {
             background-color: #0f172a;
@@ -131,10 +107,20 @@
             border: 1px solid #1e293b;
         }
 
+        .markdown-body code:not(pre code) {
+            background-color: rgba(30, 41, 59, 0.8);
+            color: #34d399;
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
         .markdown-body pre code {
             background-color: transparent;
             padding: 0;
             color: inherit;
+            border: none;
         }
 
         .mermaid-wrapper:fullscreen {
@@ -165,375 +151,263 @@
             max-width: 100% !important;
             max-height: 100% !important;
         }
-    @media print {
-    .no-print, #floatingToolbar, #fabCopy, #fabPdf, #fabDocx, #fabAgents, #fabShare, #btnGenerate, #previewContainer .skeleton, #skeletonLoader, #progressSteps, .mermaid-controls, .install-banner {
-        display: none !important;
-    }
-    body {
-        background: #ffffff !important;
-        color: #000000 !important;
-    }
-    #prdPreview, #panel-result {
-        background: #ffffff !important;
-        color: #000000 !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-    h1, h2, h3, h4, h5, h6 { color: #000000 !important; }
-    code, pre { background: #f1f5f9 !important; color: #0f172a !important; border: 1px solid #cbd5e1 !important; }
-    .page-break { break-inside: avoid; page-break-inside: avoid; }
-    table { break-inside: auto; }
-    tr { break-inside: avoid; page-break-inside: avoid; }
-    img { max-width: 100% !important; break-inside: avoid; page-break-inside: avoid; }
-    @page { margin: 2cm; }
-}
-</style>
+
+        @media print {
+            .no-print, #previewActionBar, #btnGenerate, #skeletonLoader, #progressSteps, .mermaid-controls, #mobile-tabs, header {
+                display: none !important;
+            }
+            body { background: #ffffff !important; color: #000000 !important; }
+            #prdPreview {
+                background: #ffffff !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                border: none !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            h1, h2, h3, h4, h5, h6 { color: #000000 !important; }
+            code, pre { background: #f1f5f9 !important; color: #0f172a !important; border: 1px solid #cbd5e1 !important; }
+            .page-break { break-inside: avoid; page-break-inside: avoid; }
+            table, tr, img { break-inside: avoid; page-break-inside: avoid; }
+            @page { margin: 2cm; }
+        }
+    </style>
 </head>
 
-<body
-    class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
-    <header
-        class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-50 px-3 py-2 md:px-4 md:py-3 flex items-center justify-between shadow-md gap-2">
-        <div class="flex items-center space-x-2 md:space-x-3 min-w-0">
-            <div
-                class="bg-gradient-to-tr from-emerald-500 to-teal-600 p-2 rounded-xl shadow-inner flex items-center justify-center text-white shrink-0">
+<body class="bg-[#0b0f17] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+    <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 sticky top-0 z-50 px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3 min-w-0">
+            <div class="bg-gradient-to-tr from-emerald-500 to-teal-600 p-2 rounded-xl shadow-inner flex items-center justify-center text-white shrink-0">
                 <i class="fa-solid fa-file-code text-white text-lg md:text-xl"></i>
             </div>
             <div class="min-w-0">
-                <div class="flex items-center space-x-1.5 md:space-x-2">
-                    <h1
-                        class="font-bold text-sm md:text-lg tracking-tight text-slate-100 truncate">
-                        LearnDev PRD</h1>
-                    <span
-                        class="text-[9px] md:text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 md:px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0">PWA</span>
+                <div class="flex items-center space-x-2">
+                    <h1 class="font-bold text-base md:text-lg tracking-tight text-slate-100 truncate">LearnDev PRD</h1>
+                    <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider shrink-0">PWA</span>
                 </div>
                 <p class="text-xs text-slate-400 hidden sm:block">AI Project Requirements Document Generator</p>
             </div>
         </div>
-        <div class="flex items-center gap-1 md:gap-2 shrink-0">
-            <button id="btnHistory"
-                class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-2.5 py-2 md:px-3.5 md:py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0"
-                title="Riwayat">
-                <i class="fa-solid fa-clock-rotate-left text-emerald-400 shrink-0"></i>
+        <div class="flex items-center gap-2 shrink-0">
+            <button id="btnHistory" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm" title="Riwayat">
+                <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
                 <span class="hidden sm:inline">Riwayat</span>
             </button>
-            <button id="installBtn"
-                class="hidden items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-2.5 py-2 md:px-3 md:py-2 rounded-lg transition shadow-sm min-h-[36px]"
-                title="Install App">
-                <i class="fa-solid fa-download shrink-0"></i>
+            <button id="installBtn" class="hidden items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm" title="Install App">
+                <i class="fa-solid fa-download"></i>
                 <span class="hidden md:inline">Install App</span>
             </button>
-            <button id="btnApiKey"
-                class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-2.5 py-2 md:px-3.5 md:py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0"
-                title="API Key">
-                <i class="fa-solid fa-key text-amber-400 shrink-0"></i>
+            <button id="btnApiKey" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm" title="API Key">
+                <i class="fa-solid fa-key text-amber-400"></i>
                 <span class="hidden sm:inline">API Key</span>
             </button>
-            <button id="btnSettings"
-                class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-2.5 py-2 md:px-3 md:py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0"
-                title="Pengaturan 9Router & Endpoint">
-                <i class="fa-solid fa-network-wired text-emerald-400 shrink-0"></i>
+            <button id="btnSettings" class="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition shadow-sm" title="Pengaturan 9Router & Endpoint">
+                <i class="fa-solid fa-network-wired text-emerald-400"></i>
                 <span class="hidden sm:inline">9Router</span>
-            </button>
-                <button id="btnCollapse"
-                class="hidden sm:flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium px-3 md:px-4 py-2 rounded-lg transition shadow-sm min-h-[36px] md:min-h-0"
-                title="Toggle Sidebar (Collapse/Expand)">
-                <i class="fa-solid fa-arrows-left-right text-emerald-400 shrink-0"></i>
-                <span class="hidden sm:inline">Toggle Sidebar</span>
-                <i class="fa-solid fa-xmark text-emerald-400 shrink-0 hidden"></i>
             </button>
         </div>
     </header>
 
-    <nav id="mobile-tabs" class="md:hidden flex bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-[49px] z-40">
-        <button id="mob-tab-config"
-            class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold border-b-2 border-emerald-500 text-emerald-400 bg-slate-800/80 transition">
+    <nav id="mobile-tabs" class="md:hidden flex bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-[57px] z-40">
+        <button id="mob-tab-config" class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold border-b-2 border-emerald-500 text-emerald-400 bg-slate-800/80 transition">
             <i class="fa-solid fa-sliders"></i>
             1. Konfigurasi PRD
         </button>
-        <button id="mob-tab-result"
-            class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+        <button id="mob-tab-result" class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
             <i class="fa-solid fa-file-circle-check"></i>
             2. Hasil PRD
         </button>
     </nav>
 
-    <main
-        class="flex-1 flex flex-col md:grid md:grid-cols-12 md:h-[calc(100vh-61px)] md:overflow-hidden overflow-visible">
-        <section id="panel-config"
-            class="md:col-span-5 xl:col-span-4 bg-slate-900/80 md:border-r border-slate-800 flex flex-col md:h-full md:overflow-y-auto p-4 space-y-4">
-            <div class="space-y-1">
-                <label for="aiProvider" class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">Penyedia
-                    AI</label>
-                <div class="relative">
-                    <select id="aiProvider"
-                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-base md:text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition appearance-none pr-8">
-                        <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Rekomendasi / Cepat)</option>
-                        <option value="gemini-2.5-pro">Gemini 2.5 Pro (Komprehensif)</option>
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-emerald-400">
-                        <i class="fa-solid fa-chevron-down w-4 h-4"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex-1 flex flex-col space-y-1">
-                <div class="flex justify-between items-center">
-                    <label for="promptInput"
-                        class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">Ide / Prompt
-                        Aplikasi</label>
-                    <span class="text-[11px] text-slate-500">PRD .md Terstruktur</span>
-                </div>
-                <div class="text-[11px] text-slate-500 mt-1">
-<i class="fa-solid fa-wand-magic-sparkles mr-1 text-emerald-400"></i>
-Sistem akan mendeteksi domain aplikasi secara otomatis dari prompt Anda (POS, E-Commerce, Kanban, Portfolio, SaaS, dll.) dan menyesuskan modul PRD, arsitektur, serta mock data yang relevan.
-</div>
-                <textarea id="promptInput"
-                    class="w-full flex-1 min-h-[140px] bg-slate-800 border border-slate-700 rounded-lg p-3 text-base md:text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition resize-none placeholder-slate-500"
-                    placeholder="Contoh: Buatkan PRD untuk aplikasi e-commerce fashion lokal dengan fitur keranjang, checkout WhatsApp, dan sistem manajemen diskon flash sale."></textarea>
-            </div>
-
-            <div class="space-y-1">
-                <label for="uiTheme" class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">TEMA /
-                    GAYA VISUAL UI (OPSIONAL)</label>
-                <div class="relative">
-                    <select id="uiTheme"
-                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-base md:text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition appearance-none pr-8">
-                        <option value="auto" selected>Deteksi Otomatis dari Prompt (Rekomendasi AI)</option>
-                        <option value="modern-dark">Modern Dark Mode (SaaS Style)</option>
-                        <option value="clean-min">Clean &amp; Minimalist White</option>
-                        <option value="neon-cyberpunk">Neon Cyberpunk / Dark Futuristic</option>
-                        <option value="soft-pastel">Soft Pastel / Friendly UI</option>
-                        <option value="custom">Custom Vibe (Input Teks Bebas)</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-emerald-400">
-                        <i class="fa-solid fa-chevron-down w-4 h-4"></i>
-                    </div>
-                </div>
-<input type="text" id="uiThemeCustom"
-                        class="hidden w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-base md:text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition resize-none placeholder-slate-500 mt-1"
-                        placeholder="Deskripsikan tema UI yang diinginkan...">
-            </div>
-
-            <div class="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3 space-y-2.5">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-1.5 text-slate-200 text-xs font-semibold">
-                        <i class="fa-solid fa-sliders text-emerald-400"></i>
-                        <span>Token Saver & Optimization</span>
-                    </div>
-                    <span
-                        class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">Smart</span>
-                </div>
-                <div class="space-y-2 pt-1 text-xs">
-                    <div class="flex items-center justify-between group">
-                        <label for="toggle-compress" class="flex items-center space-x-1.5 cursor-pointer flex-1">
-                            <span class="text-slate-300 group-hover:text-slate-100 transition">Compress Prompt & Context
-                                <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1 rounded ml-1">Rec:
-                                    ON</span></span>
-                        </label>
-                        <button type="button"
-                            onclick="Swal.fire({title: 'Compress Prompt & Context', text: 'Memangkas spasi ganda dan baris kosong tak terpakai pada prompt sebelum dikirim ke AI.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#10b981'})"
-                            class="text-slate-400 hover:text-emerald-400 mr-2 transition">
-                            <i class="fa-solid fa-circle-info"></i>
-                        </button>
-                        <input type="checkbox" id="toggle-compress" class="sr-only peer" checked>
-                        <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600 relative cursor-pointer"
-                            onclick="document.getElementById('toggle-compress').click()"></div>
-                    </div>
-                    <div class="flex items-center justify-between group">
-                        <label for="toggle-concise" class="flex items-center space-x-1.5 cursor-pointer flex-1">
-                            <span class="text-slate-300 group-hover:text-slate-100 transition">Concise Code /
-                                Terse-style <span
-                                    class="text-[10px] text-emerald-400 bg-emerald-500/10 px-1 rounded ml-1">Rec:
-                                    ON</span></span>
-                        </label>
-                        <button type="button"
-                            onclick="Swal.fire({title: 'Concise Code / Terse-style', text: 'Instruksi ketat agar AI langsung mengembalikan PRD murni tanpa kata pengantar atau basa-basi.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#10b981'})"
-                            class="text-slate-400 hover:text-emerald-400 mr-2 transition">
-                            <i class="fa-solid fa-circle-info"></i>
-                        </button>
-                        <input type="checkbox" id="toggle-concise" class="sr-only peer" checked>
-                        <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600 relative cursor-pointer"
-                            onclick="document.getElementById('toggle-concise').click()"></div>
-                    </div>
-                    <div class="flex items-center justify-between group">
-                        <label for="toggle-minimalist" class="flex items-center space-x-1.5 cursor-pointer flex-1">
-                            <span class="text-slate-300 group-hover:text-slate-100 transition">Minimalist Specs / YAGNI
-                                <span class="text-[10px] text-slate-400 bg-slate-700 px-1 rounded ml-1">Opt:
-                                    OFF</span></span>
-                        </label>
-                        <button type="button"
-                            onclick="Swal.fire({title: 'Minimalist Specs / YAGNI', text: 'Mengarahkan AI untuk mengutamakan spesifikasi MVP esensial tanpa over-engineering.', background: '#0f172a', color: '#f8fafc', confirmButtonColor: '#10b981'})"
-                            class="text-slate-400 hover:text-emerald-400 mr-2 transition">
-                            <i class="fa-solid fa-circle-info"></i>
-                        </button>
-                        <input type="checkbox" id="toggle-minimalist" class="sr-only peer">
-                        <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600 relative cursor-pointer"
-                            onclick="document.getElementById('toggle-minimalist').click()"></div>
-                    </div>
-                </div>
-            </div>
-
-            <button id="btnGenerate"
-                class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center space-x-2 transition-all hover:-translate-y-0.5 active:scale-[0.99] min-h-[48px]">
-                <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                <span id="generateText">Generate PRD Document</span>
-                <svg id="generateSpinner" class="animate-spin -ml-1 mr-3 h-5 text-white hidden"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-            </button>
-        </section>
-
-        <section id="panel-result"
-            class="hidden md:flex md:col-span-7 xl:col-span-8 bg-[#0b0f17] flex-col md:h-full overflow-hidden min-h-[320px] md:min-h-0">
-            <div
-                class="bg-slate-900 border-y md:border-y-0 md:border-b border-slate-800 px-3 md:px-4 py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div class="flex items-center space-x-1 bg-slate-800 p-1 rounded-lg border border-slate-700/50 w-fit">
-                    <button id="tabPreview"
-                        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-600 text-white shadow-sm transition min-h-[32px]">
-                        <i class="fa-solid fa-file-shield"></i>
-                        <span>PRD Preview</span>
-                    </button>
-                    <button id="tabCode"
-                        class="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition min-h-[32px]">
-                        <i class="fa-solid fa-code"></i>
-                        <span>Raw Markdown</span>
-                    </button>
-                </div>
-                <div class="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500">
-                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>
-                    <span>Gunakan ikon aksi di panel pratinjau</span>
-                </div>
-            </div>
-
-            <div class="flex-1 relative overflow-hidden bg-[#0b0f17] min-h-[300px] md:min-h-0">
-                <div id="previewContainer"
-                    class="absolute inset-0 w-full h-full bg-[#0b0f17]/80 overflow-auto p-4 md:p-6 markdown-body border border-slate-800/50 rounded-xl shadow-inner">
-                    <div id="prdPreview" class="max-w-4xl mx-auto space-y-4"></div>
-<div id="progressSteps" class="hidden mt-4 w-full max-w-md">
-    <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-lg">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Proses Generate PRD</span>
-            <span id="progressStepText" class="text-xs text-slate-400">Siap</span>
-        </div>
-        <div class="space-y-2" id="progressStepsList">
-            <div class="flex items-center gap-3">
-                <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">1</span>
-                <div class="flex-1 h-px bg-slate-700"></div>
-                <span class="text-xs text-slate-500">Analyzing App Context</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">2</span>
-                <div class="flex-1 h-px bg-slate-700"></div>
-                <span class="text-xs text-slate-500">Injecting Design Tokens</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">3</span>
-                <div class="flex-1 h-px bg-slate-700"></div>
-                <span class="text-xs text-slate-500">Generating Architecture & DB</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">4</span>
-                <span class="text-xs text-slate-500">Validating Mermaid Diagrams</span>
-            </div>
-        </div>
-        <div class="mt-3 h-1 w-full bg-slate-700 rounded overflow-hidden">
-            <div id="progressBar" class="h-full bg-emerald-500 w-0 transition-all duration-500"></div>
-        </div>
-    </div>
-</div>
-                    <div id="skeletonLoader" class="max-w-4xl mx-auto space-y-4 hidden">
-                        <div class="animate-pulse space-y-3">
-                            <div class="h-7 bg-slate-800 rounded-lg w-3/4"></div>
-                            <div class="h-4 bg-slate-800/60 rounded w-full"></div>
-                            <div class="h-4 bg-slate-800/60 rounded w-5/6"></div>
-                        </div>
-                        <div class="animate-pulse space-y-3">
-                            <div class="h-5 bg-slate-800 rounded w-40"></div>
-                            <div class="h-20 bg-slate-800/40 rounded-lg border border-slate-800"></div>
-                            <div class="h-3 bg-slate-800/50 rounded w-3/4"></div>
-                            <div class="h-3 bg-slate-800/50 rounded w-full"></div>
-                        </div>
-                        <div class="animate-pulse space-y-3">
-                            <div class="h-5 bg-slate-800 rounded w-44"></div>
-                            <div class="h-3 bg-slate-800/50 rounded w-full"></div>
-                            <div class="h-3 bg-slate-800/50 rounded w-5/6"></div>
-                            <div class="h-28 bg-slate-800/40 rounded-lg border border-slate-800"></div>
-                        </div>
-                        <div class="animate-pulse space-y-3">
-                            <div class="h-5 bg-slate-800 rounded w-36"></div>
-                            <div class="h-24 bg-slate-800/40 rounded-lg border border-slate-800"></div>
-                        </div>
-                        <div class="animate-pulse space-y-2">
-                            <div class="h-5 bg-slate-800 rounded w-32"></div>
-                            <div class="h-3 bg-slate-800/50 rounded w-full"></div>
-                            <div class="h-3 bg-slate-800/50 rounded w-4/5"></div>
+    <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[calc(100vh-80px)]">
+            <!-- PANEL KIRI: CONFIG & INPUT (4 Kolom) -->
+            <div id="panel-config" class="md:col-span-4 space-y-4 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label for="aiProvider" class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">Penyedia AI</label>
+                        <div class="relative">
+                            <select id="aiProvider" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition appearance-none pr-8">
+                                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Rekomendasi / Cepat)</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Komprehensif)</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-emerald-400">
+                                <i class="fa-solid fa-chevron-down w-4 h-4"></i>
+                            </div>
                         </div>
                     </div>
-                    <div id="previewEmpty"
-                        class="absolute inset-0 bg-[#0b0f17] flex flex-col items-center justify-center text-center p-6 space-y-3">
-                        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl text-slate-500 shadow-inner">
-                            <i class="fa-solid fa-file-lines text-4xl text-emerald-400"></i>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                            <label for="promptInput" class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">Ide / Prompt Aplikasi</label>
+                            <span class="text-[11px] text-slate-500">PRD .md Terstruktur</span>
                         </div>
-                        <div class="max-w-xs space-y-2">
-                            <h3 class="text-sm font-semibold text-slate-100">Belum ada PRD yang dibuat</h3>
-                            <p class="text-xs text-slate-500">Pilih penyedia, masukkan ide aplikasi, lalu klik
-                                <strong class="text-emerald-400">Generate Dokumen PRD</strong> di panel kiri.</p>
-                            <div class="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 mt-1 opacity-70">
-                                <i class="fa-solid fa-arrow-left"></i>
-                                <span>Panel Kiri</span>
+                        <div class="text-[11px] text-slate-500">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1 text-emerald-400"></i>
+                            Sistem mendeteksi domain secara otomatis dari prompt Anda.
+                        </div>
+                        <textarea id="promptInput" rows="5" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition resize-none placeholder-slate-500" placeholder="Contoh: Buatkan PRD untuk aplikasi POS kasir retail toko kelontong dengan cetak struk thermal, barcode scanner, dan dashboard penjualan harian."></textarea>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="uiTheme" class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">Tema Visual UI (Opsional)</label>
+                        <div class="relative">
+                            <select id="uiTheme" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition appearance-none pr-8">
+                                <option value="auto" selected>Deteksi Otomatis dari Prompt (Rekomendasi AI)</option>
+                                <option value="modern-dark">Modern Dark Mode (SaaS Style)</option>
+                                <option value="clean-min">Clean &amp; Minimalist White</option>
+                                <option value="neon-cyberpunk">Neon Cyberpunk / Dark Futuristic</option>
+                                <option value="soft-pastel">Soft Pastel / Friendly UI</option>
+                                <option value="custom">Custom Vibe (Input Teks Bebas)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-emerald-400">
+                                <i class="fa-solid fa-chevron-down w-4 h-4"></i>
+                            </div>
+                        </div>
+                        <input type="text" id="uiThemeCustom" class="hidden w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition placeholder-slate-500 mt-1" placeholder="Deskripsikan tema UI yang diinginkan...">
+                    </div>
+
+                    <div class="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-1.5 text-slate-200 text-xs font-semibold">
+                                <i class="fa-solid fa-sliders text-emerald-400"></i>
+                                <span>Token Saver &amp; Optimization</span>
+                            </div>
+                            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded">Smart</span>
+                        </div>
+                        <div class="space-y-2 pt-1 text-xs">
+                            <div class="flex items-center justify-between">
+                                <label for="toggle-compress" class="flex items-center space-x-1.5 cursor-pointer flex-1">
+                                    <span class="text-slate-300">Compress Prompt &amp; Context</span>
+                                </label>
+                                <input type="checkbox" id="toggle-compress" class="accent-emerald-500 cursor-pointer" checked>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label for="toggle-concise" class="flex items-center space-x-1.5 cursor-pointer flex-1">
+                                    <span class="text-slate-300">Concise Code / Terse-style</span>
+                                </label>
+                                <input type="checkbox" id="toggle-concise" class="accent-emerald-500 cursor-pointer" checked>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label for="toggle-minimalist" class="flex items-center space-x-1.5 cursor-pointer flex-1">
+                                    <span class="text-slate-300">Minimalist Specs / YAGNI</span>
+                                </label>
+                                <input type="checkbox" id="toggle-minimalist" class="accent-emerald-500 cursor-pointer">
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="codeContainer" class="absolute inset-0 w-full h-full bg-[#2d2d2d] overflow-auto hidden">
-                    <pre
-                        class="language-markdown m-0 h-full p-4"><code id="codeOutput" class="language-markdown"></code></pre>
+
+                <div class="pt-2">
+                    <button id="btnGenerate" class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-950/50 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                        <span id="generateText">Generate Dokumen PRD</span>
+                        <svg id="generateSpinner" class="animate-spin -ml-1 mr-3 h-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
                 </div>
-                <div id="floatingToolbar" class="absolute top-3 right-3 z-20 hidden sm:flex">
-                    <div
-                        class="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-lg p-1.5 shadow-lg shadow-black/40">
-                        <button id="fabCopy" disabled
-                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-300 opacity-50 pointer-events-none cursor-not-allowed focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            title="Salin PRD">
-                            <i class="fa-regular fa-copy text-sm"></i>
+            </div>
+
+            <!-- PANEL KANAN: PREVIEW CONTAINER (8 Kolom) -->
+            <div id="panel-result" class="md:col-span-8 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col overflow-hidden min-h-[500px]">
+                <!-- HEADER BAR (NON-ABSOLUTE) -->
+                <div class="flex items-center justify-between gap-4 pb-3 mb-4 border-b border-slate-800 bg-slate-900/90 rounded-xl p-2.5 shrink-0">
+                    <!-- Kiri: Progress Indicator -->
+                    <div id="generationProgress" class="flex items-center gap-2 text-sm font-mono text-emerald-400">
+                        <span class="text-xs text-slate-400">[Standby]</span>
+                    </div>
+
+                    <!-- Kanan: Action Toolbar -->
+                    <div id="previewActionBar" class="flex items-center gap-1 bg-slate-950 border border-slate-800 p-1 rounded-lg shrink-0">
+                        <button id="btnCopyPrd" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-all disabled:opacity-40" title="Salin PRD">
+                            <i class="fa-solid fa-copy"></i>
                         </button>
-                        <button id="fabPdf" disabled
-                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-300 opacity-50 pointer-events-none cursor-not-allowed focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            title="Unduh PDF">
-                            <i class="fa-solid fa-file-pdf text-sm"></i>
+                        <button id="btnDownloadPdf" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-all disabled:opacity-40" title="Unduh PDF">
+                            <i class="fa-solid fa-file-pdf"></i>
                         </button>
-                        <button id="fabDocx" disabled
-                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-300 opacity-50 pointer-events-none cursor-not-allowed focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            title="Unduh DOCX">
-                            <i class="fa-solid fa-file-word text-sm"></i>
+                        <button id="btnDownloadDocx" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-all disabled:opacity-40" title="Unduh DOCX">
+                            <i class="fa-solid fa-file-word"></i>
                         </button>
-                        <button id="fabAgents" disabled
-                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-300 opacity-50 pointer-events-none cursor-not-allowed focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            title="Unduh AGENTS.md">
-                            <i class="fa-solid fa-robot text-sm"></i>
+                        <button id="btnDownloadAgents" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-all disabled:opacity-40" title="Download AGENTS.md">
+                            <i class="fa-solid fa-robot"></i>
                         </button>
-                        <button id="fabShare"
-                            class="w-9 h-9 flex items-center justify-center rounded-md bg-slate-800 hover:bg-slate-700 hover:scale-105 text-slate-300 hover:text-emerald-400 border border-slate-700/60 transition-all duration-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            title="Bagikan via Tautan">
-                            <i class="fa-solid fa-share-nodes text-sm"></i>
+                        <button id="btnSharePrd" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-all" title="Bagikan via Tautan">
+                            <i class="fa-solid fa-share-nodes"></i>
                         </button>
                     </div>
                 </div>
+
+                <!-- PROGRESS STEPS PANEL (DURING GENERATION) -->
+                <div id="progressSteps" class="hidden mb-4 bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-lg shrink-0">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Tahapan Sintesis PRD</span>
+                        <span id="progressStepText" class="text-xs text-slate-400">Memulai...</span>
+                    </div>
+                    <div class="space-y-2" id="progressStepsList">
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">1</span>
+                            <div class="flex-1 h-px bg-slate-700"></div>
+                            <span class="text-xs text-slate-400">Analisis Domain &amp; Arsitektur</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">2</span>
+                            <div class="flex-1 h-px bg-slate-700"></div>
+                            <span class="text-xs text-slate-400">Desain Token &amp; Komponen UI</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">3</span>
+                            <div class="flex-1 h-px bg-slate-700"></div>
+                            <span class="text-xs text-slate-400">Skema Database &amp; API Endpoint</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold text-slate-400 flex items-center justify-center">4</span>
+                            <span class="text-xs text-slate-400">Diagram Mermaid &amp; Format Markdown</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 h-1 w-full bg-slate-700 rounded overflow-hidden">
+                        <div id="progressBar" class="h-full bg-emerald-500 w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+
+                <!-- SKELETON LOADER -->
+                <div id="skeletonLoader" class="space-y-4 hidden flex-1 overflow-y-auto">
+                    <div class="animate-pulse space-y-3">
+                        <div class="h-7 bg-slate-800 rounded-lg w-3/4"></div>
+                        <div class="h-4 bg-slate-800/60 rounded w-full"></div>
+                        <div class="h-4 bg-slate-800/60 rounded w-5/6"></div>
+                    </div>
+                    <div class="animate-pulse space-y-3">
+                        <div class="h-5 bg-slate-800 rounded w-40"></div>
+                        <div class="h-20 bg-slate-800/40 rounded-lg border border-slate-800"></div>
+                        <div class="h-3 bg-slate-800/50 rounded w-3/4"></div>
+                    </div>
+                </div>
+
+                <!-- PREVIEW EMPTY PLACEHOLDER -->
+                <div id="previewEmpty" class="flex-1 flex flex-col items-center justify-center text-center p-6 space-y-3">
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-2xl text-slate-500 shadow-inner">
+                        <i class="fa-solid fa-file-lines text-4xl text-emerald-400"></i>
+                    </div>
+                    <div class="max-w-xs space-y-2">
+                        <h3 class="text-sm font-semibold text-slate-100">Belum Ada Dokumen PRD</h3>
+                        <p class="text-xs text-slate-500">Tulis ide aplikasi di panel kiri, lalu klik <strong class="text-emerald-400">Generate Dokumen PRD</strong>.</p>
+                    </div>
+                </div>
+
+                <!-- AREA OUTPUT TEKS PRD (MANDIRI SCROLL) -->
+                <div id="prdPreview" class="flex-1 overflow-y-auto max-h-[70vh] pr-2 text-slate-200 prose prose-invert prose-emerald max-w-none markdown-body hidden">
+                    <!-- Hasil Markdown PRD dirender di sini -->
+                </div>
             </div>
-            </div>
-        </section>
+        </div>
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="./app.js?v=11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="./app.js?v=31"></script>
 </body>
 
 </html>

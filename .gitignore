@@ -1,4 +1,5 @@
 graphify-out/
 node_modules/
+.bcode/
 .DS_Store
 *.log
