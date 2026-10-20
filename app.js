@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // nodeSpacing/rankSpacing lega + curve linear => edge lurus, minim
             // lengkungan yang saling menyilang pada flowchart yang rapat.
             flowchart: { htmlLabels: false, nodeSpacing: 60, rankSpacing: 70, padding: 16, curve: 'linear' },
+            // ER: layout LR agar 7+ entitas tidak menumpuk jadi kolom sempit
+            // (TB => viewBox 685x1713, garis relasi sangat panjang & menyilang)
+            er: { layoutDirection: 'LR', diagramPadding: 60, nodeSpacing: 140, rankSpacing: 100, minEntityWidth: 120, useMaxWidth: true },
             sequence: { htmlLabels: false },
             er: { htmlLabels: false },
             state: { htmlLabels: false },
@@ -925,8 +928,20 @@ ${isMinimalist ? '- Utamakan prinsip YAGNI (You Aren\'t Gonna Need It) dan arsit
         svgClone.style.maxWidth = 'none';
         svgClone.style.transition = 'transform 0.12s ease-out';
         svgClone.style.transformOrigin = 'center center';
-        svgClone.style.width = '95%';
-        svgClone.style.height = 'auto';
+
+        // Paksa rasio aspek dari viewBox: tanpa ini, atribut width="100%" bawaan
+        // mermaid (height null) membuat SVG meregang/distorsi memenuhi layar.
+        const vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+        if (vb && vb.width > 0 && vb.height > 0) {
+            const availW = window.innerWidth * 0.94;
+            const availH = window.innerHeight * 0.72;
+            const scale = Math.min(availW / vb.width, availH / vb.height);
+            svgClone.style.width = (vb.width * scale) + 'px';
+            svgClone.style.height = (vb.height * scale) + 'px';
+        } else {
+            svgClone.style.width = '95%';
+            svgClone.style.height = 'auto';
+        }
 
         const updateTransform = () => {
             svgClone.style.transform = `scale(${zoomScale})`;
