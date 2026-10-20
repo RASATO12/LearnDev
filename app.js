@@ -945,7 +945,7 @@ ${isMinimalist ? '- Utamakan prinsip YAGNI (You Aren\'t Gonna Need It) dan arsit
 
         headerBar.querySelector('#fsClose').addEventListener('click', closeFullscreen);
         headerBar.querySelector('#fsZoomIn').addEventListener('click', () => { zoomScale = Math.min(zoomScale + 0.25, 3.5); updateTransform(); });
-        headerBar.querySelector('#fsZoomOut').addEventListener('click', () => { zoomScale = Math.max(zoomScale - 0.25, 0.4); updateTransform(); });
+        headerBar.querySelector('#fsZoomOut').addEventListener('click', () => { zoomScale = Math.max(zoomScale - 0.25, 0); updateTransform(); });
         headerBar.querySelector('#fsReset').addEventListener('click', () => { zoomScale = 1; updateTransform(); });
 
         document.body.appendChild(overlay);
