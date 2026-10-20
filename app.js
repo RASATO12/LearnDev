@@ -460,8 +460,12 @@ ${isMinimalist ? '- Utamakan prinsip YAGNI (You Aren\'t Gonna Need It) dan arsit
             if (/^\}/.test(l)) { inErdEntity = false; cleanedLines.push('    ' + l); continue; }
 
             // Inside erDiagram entity block: keep only `type name`
+            // Normalisasi tipe SQL berukuran: varchar(255) → varchar, decimal(5,2) → decimal
+            // (tanda kurung ditolak parser Mermaid ERD)
             if (inErdEntity) {
-                l = l.replace(/^\s*(string|int|float|date|time|datetime|timestamp|boolean|uuid|decimal|text|integer)\s+(\w+)\b.*$/, '$1 $2');
+                l = l.replace(/([A-Za-z_][\w]*)\s*\([^)]*\)/g, '$1');
+                l = l.replace(/"[^"]*"/g, '');
+                l = l.replace(/^\s*(\w+)\s+(\w+)\b.*$/, '$1 $2');
                 cleanedLines.push('        ' + l);
                 continue;
             }
@@ -573,11 +577,31 @@ ${isMinimalist ? '- Utamakan prinsip YAGNI (You Aren\'t Gonna Need It) dan arsit
 
                 // Mermaid render with progressive fallback
                 const renderWithRetry = async (codeToRender) => {
-                    const attempts = [
-                        codeToRender, // Attempt 1: full sanitized code
-                        codeToRender.replace(/\|"[^"]*"\|/g, ' --> '), // Attempt 2: no edge labels
-                        codeToRender.replace(/\|"[^"]*"\|/g, ' --> ').replace(/\[[^\]]*\]/g, ''), // Attempt 3: no brackets, no edge labels (simplest valid Mermaid)
-                    ];
+                    const isErd = /^erDiagram\b/im.test(codeToRender);
+                    let attempts;
+                    if (isErd) {
+                        // ERD: 1) kode utuh → 2) badan entitas dikosongkan (atribut rusak
+                        // diabaikan, entitas tetap tergambar) → 3) relasi saja (dijamin valid)
+                        const relsOnly = ['erDiagram'];
+                        for (const l of codeToRender.split('\n')) {
+                            const m = l.match(/^\s*([A-Za-z_]\w*)\s+(\S*[|{}]\S*)\s+([A-Za-z_]\w*)/);
+                            if (m) {
+                                const lbl = (l.match(/"([^"]*)"/) || [])[1] || 'rel';
+                                relsOnly.push(`${m[1]} ${m[2]} ${m[3]} : ${lbl}`);
+                            }
+                        }
+                        attempts = [
+                            codeToRender,
+                            codeToRender.replace(/([A-Za-z_]\w*)\s*\{[^}]*\}/gs, '$1 {}'),
+                            relsOnly.join('\n'),
+                        ];
+                    } else {
+                        attempts = [
+                            codeToRender, // Attempt 1: full sanitized code
+                            codeToRender.replace(/\|"[^"]*"\|/g, ' --> '), // Attempt 2: no edge labels
+                            codeToRender.replace(/\|"[^"]*"\|/g, ' --> ').replace(/\[[^\]]*\]/g, ''), // Attempt 3: no brackets, no edge labels (simplest valid Mermaid)
+                        ];
+                    }
 
                     for (const attempt of attempts) {
                         try {
