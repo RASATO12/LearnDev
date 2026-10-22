@@ -243,49 +243,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const isConcise = toggleConcise && toggleConcise.checked;
         const isMinimalist = toggleMinimalist && toggleMinimalist.checked;
 
-        return `Anda adalah Principal Staff Software Architect & Lead Product Designer kelas dunia.
-Tugas Anda adalah menghasilkan dokumen PRD (Project Requirements Document) teknis komprehensif, terstruktur tinggi, modular, dan siap diimplementasikan developer.
+        return `You are a world-class Principal Staff Software Architect & Lead Product Designer.
+Your task is to generate a comprehensive, high-level, structured, modular technical PRD (Project Requirements Document) ready for developer implementation.
 
-ATURAN STRUKTUR & INTEGRITAS (MUTLAK):
-1. DILARANG KERAS menyertakan salam pembuka, kata pengantar, sapaan percakapan ("Tentu, saya akan...", "Halo!", "Sebagai seorang..."), atau catatan penutup.
-2. Respons HARUS LANGSUNG DIMULAI pada karakter pertama dengan judul markdown level 1:
-# [Nama Aplikasi / Produk] - Project Requirements Document (PRD)
-3. Diagram Mermaid WAJIB menggunakan sintaks yang valid dan sederhana (flowchart TD atau erDiagram). Gunakan tanda kutip dua untuk teks yang mengandung tanda kurung atau karakter khusus (contoh: ["Frontend (Client)"], STORES ||--o{ USERS : "has").
+STRUCTURE & INTEGRITY RULES (ABSOLUTE):
+1. NEVER include greetings, introductions, conversational openers ("Sure, I will...", "Hello!", "As a..."), or closing notes.
+2. The response MUST START directly with a markdown level 1 heading as the very first character:
+# [Application / Product Name] - Project Requirements Document (PRD)
+3. Mermaid diagrams MUST use valid and simple syntax (flowchart TD or erDiagram). Use double quotes for text containing parentheses or special characters (e.g., ["Frontend (Client)"], STORES ||--o{ USERS : "has").
+4. OUTPUT LANGUAGE MUST BE ENGLISH. Translate the user's idea from any language (Indonesian, etc.) into English automatically. The entire PRD content — explanations, section headings, feature names, Mermaid diagram labels, database schema, API endpoints — must be in English. NEVER use the user's native language in the output document.
 
-ATURAN LAYOUT FLOWCHART — WAJIB DIKETAHUI, PELANGGARAN = DIAGRAM BERANTAKAN:
-(a) SEMUA edge mengalir ke BAWAH. DILARANG KERAS edge yang menunjuk ke node di atas/sebelumnya (mis: DILARANG C --> A). Untuk alur balik (respon balik ke pengguna), jangan tarik panah balik — buat node baru yang posisinya lebih bawah, contoh: A["Kasir"] --> B["Frontend"] --> C["Respon Sukses"].
-(b) DILARANG edge melompat level: hubungkan HANYA ke node di level tepat di bawahnya (A --> B --> C, bukan A --> C).
-(c) Maksimal 10 node total dan maksimal 2 edge keluar dari satu node.
-(d) Label node maksimal 3 kata. Label edge maksimal 3 kata, letakkan di tengah garis (A -->|"label singkat"| B).
-(e) Jika lebih dari 6 node, WAJIB mengelompokkan dengan subgraph; edge dari luar subgraph hanya boleh menyentuh node paling atas di dalamnya.
-(f) Urutkan edge dalam subgraph dari kiri ke kanan mengikuti urutan deklarasi node, mulai deklarasi node induk dulu, baru anak, agar dagre menempatkan mereka di kolom yang benar.
+FLOWCHART LAYOUT RULES — MUST FOLLOW, VIOLATION = MESSY DIAGRAM:
+(a) ALL edges flow DOWNWARD. NEVER point an edge to a node above/earlier (e.g., NEVER C --> A). For return flows (response back to the user), do not draw a backward arrow — create a new node positioned lower, e.g., A["Cashier"] --> B["Frontend"] --> C["Success Response"].
+(b) NEVER skip levels: connect ONLY to the node exactly one level below (A --> B --> C, not A --> C).
+(c) Maximum 10 nodes total and maximum 2 outgoing edges per node.
+(d) Node labels max 3 words. Edge labels max 3 words, placed mid-line (A -->|"short label"| B).
+(e) If more than 6 nodes, group them with a subgraph; edges from outside the subgraph may only touch the topmost node inside it.
+(f) Order edges within a subgraph left-to-right following node declaration order — declare parent nodes first, then children — so dagre places them in the correct columns.
 
-STRUKTUR DOKUMEN:
-# [Nama Aplikasi / Produk] - Project Requirements Document (PRD)
+DOCUMENT STRUCTURE:
+# [Application / Product Name] - Project Requirements Document (PRD)
 
 ## 1. Executive Summary & Problem Statement
-- Solusi, persona pengguna utama, dan value proposition.
+- Solution, primary user personas, and value proposition.
 
-## 2. Arsitektur Teknis & Tech Stack
+## 2. Technical Architecture & Tech Stack
 - Frontend, Backend, Database, State Management, Auth, Hosting/Infra.
-- Alasan pemilihan stack yang efisien.
+- Reasoning for efficient stack choices.
 
-## 3. Desain Sistem & Panduan UI/UX
-- Tema Visual Terpilih: ${selectedTheme}
+## 3. System Design & UI/UX Guidelines
+- Selected Visual Theme: ${selectedTheme}
 - Color Palette (Hex codes: Background, Surface, Primary Accent, Text, Border).
-- Typography Scale & Komponen UI Inti.
+- Typography Scale & Core UI Components.
 
-## 4. Alur Kerja Sistem & Diagram Mermaid
-Sertakan blok diagram Mermaid valid (arsitektur atau alur pengguna):
+## 4. System Workflow & Mermaid Diagrams
+Include a valid Mermaid diagram block (architecture or user flow):
 \`\`\`mermaid
 flowchart TD
-    A["Pengguna"] --> B["Frontend Client"]
+    A["User"] --> B["Frontend Client"]
     B --> C["API Gateway / Router"]
-    C --> D[("Database Utama")]
+    C --> D[("Main Database")]
 \`\`\`
 
-## 5. Skema Database (ERD / Relational / Collections)
-Sertakan diagram ERD visual dengan sintaks Mermaid erDiagram. Tampilkan entitas utama, atribut tipe data kunci (PK/FK), dan relasi antar tabel. Contoh format yang valid:
+## 5. Database Schema (ERD / Relational / Collections)
+Include a visual ERD diagram using Mermaid erDiagram syntax. Show the main entities, key data type attributes (PK/FK), and table relationships. Valid format example:
 
 \`\`\`mermaid
 erDiagram
@@ -318,21 +319,21 @@ erDiagram
     }
 \`\`\`
 
-- Definisi tabel, kolom, tipe data, indeks, dan relasi utama.
+- Table definitions, columns, data types, indexes, and key relationships.
 
-## 6. Spesifikasi API Endpoints (RESTful / RPC)
+## 6. API Endpoints Specification (RESTful / RPC)
 - Method, Path, Request Body, Response Status, Auth Header.
 
-## 7. Rincian Fitur & User Stories (MoSCoW Prioritization)
+## 7. Feature Details & User Stories (MoSCoW Prioritization)
 - Must Have, Should Have, Could Have.
 
-## 8. Panduan File AGENTS.md / Cursor Rules
-Sertakan blok panduan eksekusi untuk AI coding agent (Cursor, Windsurf, OpenCode) untuk proyek ini.
+## 8. AGENTS.md File Guide / Cursor Rules
+Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCode) for this project.
 
-OPTIMASI TOKEN:
-${isCompress ? '- Gunakan formulasi kalimat padat, informatif, hilangkan basa-basi.' : ''}
-${isConcise ? '- Notasi kode ringkas dan representatif.' : ''}
-${isMinimalist ? '- Utamakan prinsip YAGNI (You Aren\'t Gonna Need It) dan arsitektur modular yang ramping.' : ''}
+TOKEN OPTIMIZATION:
+${isCompress ? '- Use concise, informative sentence formulations; skip any filler.' : ''}
+${isConcise ? '- Use concise, representative code notation.' : ''}
+${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) and a lean modular architecture.' : ''}
 `;
     };
 
@@ -384,7 +385,7 @@ ${isMinimalist ? '- Utamakan prinsip YAGNI (You Aren\'t Gonna Need It) dan arsit
                 {
                     role: 'user',
                     parts: [
-                        { text: `${buildSystemPrompt()}\n\nIDE PENGGUNA:\n${userPrompt}` }
+                        { text: `${buildSystemPrompt()}\n\nUSER IDEA:\n${userPrompt}` }
                     ]
                 }
             ],
