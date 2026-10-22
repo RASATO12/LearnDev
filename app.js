@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // sehingga export PNG/JPG mustahil dilakukan.
             // nodeSpacing/rankSpacing lega + curve linear => edge lurus, minim
             // lengkungan yang saling menyilang pada flowchart yang rapat.
-            flowchart: { htmlLabels: false, nodeSpacing: 60, rankSpacing: 70, padding: 16, curve: 'linear' },
+            flowchart: { htmlLabels: false, nodeSpacing: 90, rankSpacing: 110, padding: 24, curve: 'linear', arrowMarkerAbsolute: true },
             // ER: layout LR agar 7+ entitas tidak menumpuk jadi kolom sempit
             // (TB => viewBox 685x1713, garis relasi sangat panjang & menyilang)
             er: { layoutDirection: 'LR', diagramPadding: 60, nodeSpacing: 140, rankSpacing: 100, minEntityWidth: 120, useMaxWidth: true },
@@ -250,7 +250,15 @@ ATURAN STRUKTUR & INTEGRITAS (MUTLAK):
 1. DILARANG KERAS menyertakan salam pembuka, kata pengantar, sapaan percakapan ("Tentu, saya akan...", "Halo!", "Sebagai seorang..."), atau catatan penutup.
 2. Respons HARUS LANGSUNG DIMULAI pada karakter pertama dengan judul markdown level 1:
 # [Nama Aplikasi / Produk] - Project Requirements Document (PRD)
-3. Diagram Mermaid WAJIB menggunakan sintaks yang valid dan sederhana (flowchart TD atau erDiagram). Gunakan tanda kutip dua untuk teks yang mengandung tanda kurung atau karakter khusus (contoh: ["Frontend (Client)"], STORES ||--o{ USERS : "has"). ATURAN LAYOUT FLOWCHART AGAR RAPI (WAJIB): (a) arah edge harus hierarkis top-down — node hanya menunjuk ke level tepat di bawahnya, DILARANG membuat edge yang melompat level atau menunjuk ke node di atasnya (mis: DILARANG A --> C jika B berada di antaranya, hubungkan bertahap A --> B --> C); (b) maksimal 12 node dan maksimal 2 edge keluar dari satu node; (c) label node maksimal 3 kata, singkat dan jelas; (d) jika sistem lebih dari 8 node, wajib mengelompokkan modul menggunakan subgraph; (e) urutkan edge dari kiri ke kanan dalam satu level agar tidak menyilang.
+3. Diagram Mermaid WAJIB menggunakan sintaks yang valid dan sederhana (flowchart TD atau erDiagram). Gunakan tanda kutip dua untuk teks yang mengandung tanda kurung atau karakter khusus (contoh: ["Frontend (Client)"], STORES ||--o{ USERS : "has").
+
+ATURAN LAYOUT FLOWCHART — WAJIB DIKETAHUI, PELANGGARAN = DIAGRAM BERANTAKAN:
+(a) SEMUA edge mengalir ke BAWAH. DILARANG KERAS edge yang menunjuk ke node di atas/sebelumnya (mis: DILARANG C --> A). Untuk alur balik (respon balik ke pengguna), jangan tarik panah balik — buat node baru yang posisinya lebih bawah, contoh: A["Kasir"] --> B["Frontend"] --> C["Respon Sukses"].
+(b) DILARANG edge melompat level: hubungkan HANYA ke node di level tepat di bawahnya (A --> B --> C, bukan A --> C).
+(c) Maksimal 10 node total dan maksimal 2 edge keluar dari satu node.
+(d) Label node maksimal 3 kata. Label edge maksimal 3 kata, letakkan di tengah garis (A -->|"label singkat"| B).
+(e) Jika lebih dari 6 node, WAJIB mengelompokkan dengan subgraph; edge dari luar subgraph hanya boleh menyentuh node paling atas di dalamnya.
+(f) Urutkan edge dalam subgraph dari kiri ke kanan mengikuti urutan deklarasi node, mulai deklarasi node induk dulu, baru anak, agar dagre menempatkan mereka di kolom yang benar.
 
 STRUKTUR DOKUMEN:
 # [Nama Aplikasi / Produk] - Project Requirements Document (PRD)
