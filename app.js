@@ -484,6 +484,21 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
                 continue;
             }
 
+            // Normalisasi judul subgraph: `subgraph X (PWA Client)` -> `subgraph X ["PWA Client"]
+            // (kurang/karakter khusus tanpa kutip mematahkan parser Mermaid)
+            if (/^subgraph\b/i.test(l)) {
+                const sm = l.match(/^subgraph\s+(\w+)(.*)$/i);
+                if (sm) {
+                    let title = (sm[2] || '').trim().replace(/^[\["]|[\]"]$/g, '').replace(/"/g, '').trim();
+                    if (title && !title.toLowerCase().includes(sm[1].toLowerCase())) {
+                        title = `${sm[1]} ${title}`;
+                    }
+                    l = title ? `subgraph ${sm[1]} ["${title}"]` : `subgraph ${sm[1]}`;
+                }
+                cleanedLines.push('    ' + l);
+                continue;
+            }
+
             // Skip duplicate node definitions (keep first occurrence)
             const nodeDef = l.match(/^(\w+)\s*[\[\(\{<]/);
             if (nodeDef && !l.includes('-->') && !l.includes('---')) {
