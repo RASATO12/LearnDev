@@ -1182,14 +1182,28 @@ ${clone.innerHTML}
     if (btnDownloadAgents) {
         btnDownloadAgents.addEventListener('click', () => {
             if (!generatedMarkdown) return;
-            let agentSection = '';
-            const match = generatedMarkdown.match(/##\s*8\.?[^\n]*AGENTS\.md[\s\S]*?(?=\n##\s+\d|\n#\s+|$)/i);
-            if (match) {
-                agentSection = match[0].trim();
-                agentSection = agentSection.replace(/```markdown\s*/gi, '').replace(/```$/g, '').trim();
-            } else {
+            // ponytail: section 8 embeds the AGENTS.md body in a ```markdown fence whose
+            // first line is "# AGENTS.md" — a plain regex stops there; scan fences instead.
+            const lines = generatedMarkdown.split('\n');
+            let inFence = false, capturing = false, out = [];
+            for (const line of lines) {
+                if (/^```/.test(line)) inFence = !inFence;
+                if (!inFence) {
+                    if (!capturing && /^##\s*8\b/.test(line)) { capturing = true; continue; }
+                    if (capturing && /^#{1,2}\s/.test(line)) break;
+                }
+                if (capturing) out.push(line);
+            }
+            let agentSection = out.join('\n')
+                .replace(/```[^\n]*\n?/g, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+            if (!agentSection) {
                 const title = getPrdTitle();
-                agentSection = `# AGENTS.md - Panduan Arsitektur & Coding Agent\n\n> Diekstrak otomatis dari: ${title}\n> Sasaran: Claude Code, Cursor, OpenCode, Windsurf, Copilot\n\n${generatedMarkdown}`;
+                agentSection = `# AGENTS.md - Architecture & Coding Agent Guide\n\n> Auto-extracted from: ${title}\n> Targets: Claude Code, Cursor, OpenCode, Windsurf, Copilot\n\n${generatedMarkdown}`;
+            } else if (!/^#\s/.test(agentSection)) {
+                const title = getPrdTitle();
+                agentSection = `# AGENTS.md - Architecture & Coding Agent Guide\n\n> Auto-extracted from: ${title}\n\n${agentSection}`;
             }
 
             const blob = new Blob([agentSection], { type: 'text/markdown;charset=utf-8' });
