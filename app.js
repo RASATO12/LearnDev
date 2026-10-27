@@ -252,6 +252,7 @@ STRUCTURE & INTEGRITY RULES (ABSOLUTE):
 # [Application / Product Name] - Project Requirements Document (PRD)
 3. Mermaid diagrams MUST use valid and simple syntax (flowchart TD or erDiagram). Use double quotes for text containing parentheses or special characters (e.g., ["Frontend (Client)"], STORES ||--o{ USERS : "has").
 4. OUTPUT LANGUAGE MUST BE ENGLISH. Translate the user's idea from any language (Indonesian, etc.) into English automatically. The entire PRD content — explanations, section headings, feature names, Mermaid diagram labels, database schema, API endpoints — must be in English. NEVER use the user's native language in the output document.
+5. MANDATORY SECTIONS — NEVER skip, collapse, or shorten these: "## 3. Product Design Specification" (color palette, typography scale, interface layout) and "## 5. Database Schema (ERD)". If the user idea seems simple, still produce both in full.
 
 FLOWCHART LAYOUT RULES — MUST FOLLOW, VIOLATION = MESSY DIAGRAM:
 (a) ALL edges flow DOWNWARD. NEVER point an edge to a node above/earlier (e.g., NEVER C --> A). For return flows (response back to the user), do not draw a backward arrow — create a new node positioned lower, e.g., A["Cashier"] --> B["Frontend"] --> C["Success Response"].
@@ -271,10 +272,12 @@ DOCUMENT STRUCTURE:
 - Frontend, Backend, Database, State Management, Auth, Hosting/Infra.
 - Reasoning for efficient stack choices.
 
-## 3. System Design & UI/UX Guidelines
+## 3. Product Design Specification
+This section is MANDATORY — produce it in full detail even for a minimal product.
 - Selected Visual Theme: ${selectedTheme}
-- Color Palette (Hex codes: Background, Surface, Primary Accent, Text, Border).
-- Typography Scale & Core UI Components.
+- Color Palette: a role-to-hex table covering Background, Surface, Primary Accent, Secondary Accent, Success, Warning, Error, Text Primary, Text Secondary, and Border colors. Give the exact hex code for every role (e.g. Background #0B0F17, Primary Accent #10B981).
+- Typography Scale: font families (sans/serif/mono), the full type scale (xs, sm, base, lg, xl, 2xl, 3xl) with size in rem/px, font weights, and line-heights, plus where each size is used.
+- Interface Layout: spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
 
 ## 4. System Workflow & Mermaid Diagrams
 Include a valid Mermaid diagram block (architecture or user flow):
@@ -286,25 +289,30 @@ flowchart TD
 \`\`\`
 
 ## 5. Database Schema (ERD / Relational / Collections)
-Include a visual ERD diagram using Mermaid erDiagram syntax. Show the main entities, key data type attributes (PK/FK), and table relationships. Valid format example:
+This section is MANDATORY — produce it in full even if the schema is simple.
+- A visual ERD diagram using Mermaid erDiagram syntax (see rules below).
+- Table definitions, columns, data types, indexes, and key relationships.
+
+ERD SYNTAX RULES — MUST FOLLOW EXACTLY, VIOLATION = BROKEN DIAGRAM:
+(a) EVERY entity MUST have a full attribute body in braces. NEVER list an entity name on a relationship line without defining its body.
+(b) Attribute lines use the exact form: \`type name PK "comment"\` or \`type name FK\`. Types are simple lowercase words ONLY: string, int, decimal, boolean, timestamp, text, json. NEVER write parenthesized types like varchar(255) or decimal(10,2).
+(c) Mark primary keys with PK and foreign keys with FK. Add UNIQUE where relevant.
+(d) Relationship syntax: \`A ||--o{ B : "label"\`. Keep relationship labels to 1-3 words.
+(e) Maximum 8 entities; pick the core ones. Every entity referenced on a relationship line MUST have a body below it.
+Valid format example:
 
 \`\`\`mermaid
 erDiagram
     STORES ||--o{ USERS : "has"
     STORES ||--o{ PRODUCTS : "contains"
-    STORES ||--o{ CATEGORIES : "classifies"
-    USERS ||--o{ ORDERS : "processes"
-    PRODUCTS ||--o{ ORDER_ITEMS : "included in"
-    ORDERS ||--|{ ORDER_ITEMS : "contains"
 
     STORES {
         string id PK "UUID"
         string name
-        string address TEXT
+        string address
         string currency "IDR"
         decimal tax_rate
         timestamp created_at
-        timestamp updated_at
     }
     USERS {
         string id PK "UUID"
@@ -312,14 +320,19 @@ erDiagram
         string username UNIQUE
         string password_hash
         string role
-        string full_name
         boolean is_active
         timestamp created_at
-        timestamp updated_at
+    }
+    PRODUCTS {
+        string id PK "UUID"
+        string store_id FK
+        string name
+        decimal price
+        int stock_qty
+        boolean is_active
+        timestamp created_at
     }
 \`\`\`
-
-- Table definitions, columns, data types, indexes, and key relationships.
 
 ## 6. API Endpoints Specification (RESTful / RPC)
 - Method, Path, Request Body, Response Status, Auth Header.
