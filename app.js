@@ -1236,6 +1236,13 @@ ${clone.innerHTML}
                 .replace(/```[^\n]*\n?/g, '')
                 .replace(/\n{3,}/g, '\n\n')
                 .trim();
+
+            // Hapus baris instruksi template (bukan konten nyata) jika disalin AI:
+            const installLine = 'Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCode) for this project.';
+            if (agentSection.startsWith(installLine)) {
+                agentSection = agentSection.replace(installLine + '\n', '').trim();
+            }
+
             if (!agentSection) {
                 const title = getPrdTitle();
                 agentSection = `# AGENTS.md - Architecture & Coding Agent Guide\n\n> Auto-extracted from: ${title}\n> Targets: Claude Code, Cursor, OpenCode, Windsurf, Copilot\n\n${generatedMarkdown}`;
