@@ -359,6 +359,16 @@ Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCod
 - **Plain & Direct:** Write production-ready code only. Skip metaphor, skip "Think of this as...".
 - **No Dead Code:** Every function, class, and constant must be used in the generated application.
 
+### Database Schema Summary (FROM Section 5 — MUST ATTACH)
+- Take the English ERD / relational schema from the PRD and restate it as an execution table list.
+- For every entity: name, key columns, types (PK/FK/UNIQUE flags), and the relationship to other entities.
+- Keep it compact so any coding agent (Cursor, Claude, Windsurf) can recreate the database model from any PRD.
+
+### API Endpoints Summary (FROM Section 6 — MUST ATTACH)
+- Take the English RESTful endpoints from the PRD and restate the key ones.
+- For every endpoint: Method, Path, Request Body, Response Status, Auth Header requirement.
+- Keep it compact so any coding agent can build the network layer from any PRD.
+
 TOKEN OPTIMIZATION:
 ${isCompress ? '- Use concise, informative sentence formulations; skip any filler.' : ''}
 ${isConcise ? '- Use concise, representative code notation.' : ''}
