@@ -352,6 +352,13 @@ Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCod
 - **Typography Scale:** (xs, sm, base, lg, xl, 2xl, 3xl) with font families, sizes in rem/px, weights, line-heights, and usage of each.
 - **Interface Layout:** spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
 
+### Code Quality Rules — Anti-Slop (MUST FOLLOW)
+- **No Redundant Comments:** Never add comments like \`// This function handles X\` or \`// Initialize MainActivity\`. Code must be self-explanatory.
+- **Minimal Boilerplate:** Share one implementation for repeated patterns; never duplicate similar handlers or models.
+- **No Tutorial Prose:** Do not write introductory or explanatory paragraphs in code files (no "We need to...", "Also...").
+- **Plain & Direct:** Write production-ready code only. Skip metaphor, skip "Think of this as...".
+- **No Dead Code:** Every function, class, and constant must be used in the generated application.
+
 TOKEN OPTIMIZATION:
 ${isCompress ? '- Use concise, informative sentence formulations; skip any filler.' : ''}
 ${isConcise ? '- Use concise, representative code notation.' : ''}
