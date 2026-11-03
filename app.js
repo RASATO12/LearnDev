@@ -47,6 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const NINEROUTER_URL_STORAGE = 'learndev_9router_url';
     const NINEROUTER_KEY_STORAGE = 'learndev_9router_key';
 
+    // Gemini 2.5 Flash/Pro support up to 65536 output tokens — the cap of the old value
+    // (8192) stopped the full PRD (Design + ERD + 8 sections) mid-response.
+    const GEMINI_MAX_OUTPUT_TOKENS = 65536;
+
     // Initialize Libraries
     if (window.mermaid) {
         mermaid.initialize({
@@ -404,7 +408,7 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
             ],
             generationConfig: {
                 temperature: 0.3,
-                maxOutputTokens: 8192
+                maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS
             }
         };
 
@@ -1210,15 +1214,21 @@ ${clone.innerHTML}
     if (btnDownloadAgents) {
         btnDownloadAgents.addEventListener('click', () => {
             if (!generatedMarkdown) return;
-            // ponytail: section 8 embeds the AGENTS.md body in a ```markdown fence whose
-            // first line is "# AGENTS.md" — a plain regex stops there; scan fences instead.
+
+            // Section 8 is the last section of the PRD. The guide body inside it commonly
+            // carries its own # / ## / ### titles — the old implementation cut off the
+            // file at the first one. Now capture everything until the next real numbered
+            // section (## 9+) or the end of the document.
             const lines = generatedMarkdown.split('\n');
             let inFence = false, capturing = false, out = [];
             for (const line of lines) {
                 if (/^```/.test(line)) inFence = !inFence;
                 if (!inFence) {
                     if (!capturing && /^##\s*8\b/.test(line)) { capturing = true; continue; }
-                    if (capturing && /^#{1,2}\s/.test(line)) break;
+                    if (capturing && /^##\s+([0-9]+)\./.test(line)) {
+                        const num = parseInt(line.match(/^##\s+([0-9]+)\./)[1], 10);
+                        if (num > 8) break;
+                    }
                 }
                 if (capturing) out.push(line);
             }
