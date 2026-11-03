@@ -347,6 +347,11 @@ erDiagram
 ## 8. AGENTS.md File Guide / Cursor Rules
 Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCode) for this project.
 
+### Design System Summary (MUST FOLLOW)
+- **Color Palette:** (Background, Surface, Primary Accent, Secondary Accent, Success, Warning, Error, Text Primary, Text Secondary, Border) — with exact hex codes.
+- **Typography Scale:** (xs, sm, base, lg, xl, 2xl, 3xl) with font families, sizes in rem/px, weights, line-heights, and usage of each.
+- **Interface Layout:** spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
+
 TOKEN OPTIMIZATION:
 ${isCompress ? '- Use concise, informative sentence formulations; skip any filler.' : ''}
 ${isConcise ? '- Use concise, representative code notation.' : ''}
