@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!replikaToggle || !replikaTrack || !replikaKnob || !replikaBadge || !replikaUrlError) return;
         if (replikaMode) {
             replikaTrack.classList.add('bg-emerald-600');
-            replikaTrack.classList.remove('bg-slate-700', 'border-slate-600');
+            replikaTrack.classList.remove('bg-slate-700', 'ring-slate-600');
             replikaKnob.classList.add('translate-x-4');
             replikaBadge.classList.remove('hidden');
             replikaUrlError.classList.add('hidden');
