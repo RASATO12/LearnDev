@@ -14,6 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateText = el('generateText');
     const generateSpinner = el('generateSpinner');
 
+    const replikaUrlEl = el('replikaUrl');
+    const replikaToggle = el('replikaToggle');
+    const replikaTrack = el('replikaTrack');
+    const replikaKnob = el('replikaKnob');
+    const replikaBadge = el('replikaBadge');
+    const replikaUrlError = el('replikaUrlError');
+    const replikaTemplates = el('replikaTemplates');
+
     const panelConfig = el('panel-config');
     const panelResult = el('panel-result');
     const mobTabConfig = el('mob-tab-config');
@@ -42,10 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let generatedMarkdown = '';
     let deferredPrompt = null;
+    let replikaMode = false;
+    let replikaUrl = '';
+    let replikaTemplate = 'clone';
     const HISTORY_KEY = 'learndev_prd_history';
     const API_KEY_STORAGE = 'learndev_gemini_api_key';
     const NINEROUTER_URL_STORAGE = 'learndev_9router_url';
     const NINEROUTER_KEY_STORAGE = 'learndev_9router_key';
+    const REPLIKA_STORAGE = 'learndev_replika_settings';
 
     // Gemini 2.5 Flash/Pro support up to 65536 output tokens — the cap of the old value
     // (8192) stopped the full PRD (Design + ERD + 8 sections) mid-response.
@@ -93,6 +105,119 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Replika Mode toggle + badge + template chips
+    const setReplikaState = (state) => {
+        replikaMode = state;
+        saveReplikaSettings();
+        if (!replikaTrack || !replikaKnob || !replikaBadge || !replikaUrlError) return;
+        if (replikaMode) {
+            replikaUrlError.classList.add('hidden');
+        }
+    };
+
+    const updateReplikaDisplay = () => {
+        if (!replikaToggle || !replikaTrack || !replikaKnob || !replikaBadge || !replikaUrlError) return;
+        if (replikaMode) {
+            replikaTrack.classList.add('bg-emerald-600');
+            replikaTrack.classList.remove('bg-slate-700', 'border-slate-600');
+            replikaKnob.classList.add('translate-x-4');
+            replikaBadge.classList.remove('hidden');
+            replikaUrlError.classList.add('hidden');
+        } else {
+            replikaTrack.classList.remove('bg-emerald-600');
+            replikaTrack.classList.add('bg-slate-700', 'ring-slate-600');
+            replikaKnob.classList.remove('translate-x-4');
+            replikaBadge.classList.add('hidden');
+        }
+    };
+
+    const isValidUrl = (str) => {
+        try {
+            const u = new URL(str);
+            return u.protocol === 'http:' || u.protocol === 'https:';
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const showReplikaUrlError = (show) => {
+        if (!replikaUrlError) return;
+        replikaUrlError.classList.toggle('hidden', !show);
+    };
+
+    if (replikaToggle) {
+        replikaToggle.addEventListener('change', (e) => {
+            setReplikaState(e.target.checked);
+            updateReplikaDisplay();
+        });
+    }
+
+    if (replikaUrlEl) {
+        replikaUrlEl.addEventListener('input', () => {
+            replikaUrlEl.value = replikaUrlEl.value.trim();
+            replikaUrl = replikaUrlEl.value.trim();
+            if (replikaMode && replikaUrl && !isValidUrl(replikaUrl)) {
+                showReplikaUrlError(true);
+            } else {
+                showReplikaUrlError(false);
+            }
+        });
+        replikaUrlEl.addEventListener('blur', () => {
+            if (replikaMode && replikaUrl && !isValidUrl(replikaUrl)) {
+                showReplikaUrlError(true);
+            } else {
+                showReplikaUrlError(false);
+            }
+        });
+    }
+
+    // Template chip selection
+    if (replikaTemplates) {
+        replikaTemplates.querySelectorAll('button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                replikaTemplates.querySelectorAll('button').forEach((b) => {
+                    b.classList.remove('bg-emerald-600/20', 'border-emerald-500/40', 'text-emerald-300');
+                    b.classList.add('bg-slate-800', 'border-slate-700', 'text-slate-300');
+                });
+                btn.classList.remove('bg-slate-800', 'border-slate-700', 'text-slate-300');
+                btn.classList.add('bg-emerald-600/20', 'border-emerald-500/40', 'text-emerald-300');
+                replikaTemplate = btn.dataset.replika;
+                saveReplikaSettings();
+            });
+        });
+    }
+
+    // Restore saved Replika settings on load
+    const loadReplikaSettings = () => {
+        try {
+            const saved = JSON.parse(localStorage.getItem(REPLIKA_STORAGE) || '{}');
+            replikaMode = !!saved.mode;
+            replikaUrl = (saved.url || '').trim();
+            replikaTemplate = saved.template || 'clone';
+            if (replikaUrlEl) {
+                replikaUrlEl.value = replikaMode ? replikaUrl : '';
+            }
+            updateReplikaDisplay();
+        } catch (e) {
+            console.error('Failed to load Replika settings:', e);
+        }
+    };
+
+    const saveReplikaSettings = () => {
+        try {
+            localStorage.setItem(REPLIKA_STORAGE, JSON.stringify({
+                mode: replikaMode,
+                url: replikaMode ? replikaUrl : '',
+                template: replikaTemplate
+            }));
+        } catch (e) {
+            console.error('Failed to save Replika settings:', e);
+        }
+    };
+
+    // Restore saved Replika settings on page load
+    loadReplikaSettings();
 
     // Mobile Navigation Tabs
     const switchTab = (tab) => {
@@ -249,6 +374,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `You are a world-class Principal Staff Software Architect & Lead Product Designer.
 Your task is to generate a comprehensive, high-level, structured, modular technical PRD (Project Requirements Document) ready for developer implementation.
+
+${replikaMode ? `
+REPLICA MODE — TARGET APP RECON (ACTIVE):
+Target App URL: ${replikaUrl}
+Replika Template: ${replikaTemplate}
+When Replika Mode is ON, base the PRD on a recon-style structural analysis of the target app at the given URL before generating the clone documentation:
+
+PHASE 1 — Discovery & Analysis (outline before writing):
+1. Screen Inventory: identify and list all screens or pages visible or inferable.
+2. User Flows: describe key user journeys from entry to completion.
+3. Feature Matrix: catalog all features with priority (Must Have, Should Have, Could Have).
+4. Data Model: identify core entities and relationships.
+5. UI Direction: visual style, layout patterns, tone, and components used.
+
+PHASE 2 — Clone Synthesis:
+- Generate a full PRD for a functional clone replicating the target app.
+- Preserve the essential UX/workflows, map to an equivalent clean tech stack, and note any platform/API-specific constraints.
+- If the URL is unreachable or a placeholder, still generate the PRD from the user's idea with a "replika target" disclaimer.
+
+${replikaUrl ? '- Target URL taken from the Replika Mode panel; honor it during the PRD outline and structural decisions.' : '- No URL provided in this session; Replika Mode is ON but the target is undefined — derive the PRD from the user idea.'}
+` : ''}
 
 STRUCTURE & INTEGRITY RULES (ABSOLUTE):
 1. NEVER include greetings, introductions, conversational openers ("Sure, I will...", "Hello!", "As a..."), or closing notes.
@@ -511,6 +657,12 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
             if (/erDiagram/i.test(l)) inErdEntity = false;
             if (/^\w+\s*\{/.test(l)) { inErdEntity = true; cleanedLines.push('    ' + l); continue; }
             if (/^\}/.test(l)) { inErdEntity = false; cleanedLines.push('    ' + l); continue; }
+
+            // Namespace: `namespace replika {` / `namespace replika` — biarkan utuh (Mermaid support)
+            if (/^namespace\b/i.test(l)) {
+                cleanedLines.push('    ' + l);
+                continue;
+            }
 
             // Inside erDiagram entity block: keep only `type name`
             // Normalisasi tipe SQL berukuran: varchar(255) → varchar, decimal(5,2) → decimal
@@ -1042,7 +1194,10 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
                 title,
                 prompt,
                 markdown,
-                date: new Date().toLocaleString('id-ID')
+                date: new Date().toLocaleString('id-ID'),
+                replikaMode: replikaMode,
+                replikaUrl: replikaUrl,
+                replikaTemplate: replikaTemplate
             });
             localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
         } catch (e) {
@@ -1072,6 +1227,22 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
 
             // Switch view on mobile to result tab
             switchTab('result');
+
+            // Replika Mode: valid target URL required
+            if (replikaMode) {
+                const urlValue = (replikaUrlEl && replikaUrlEl.value.trim()) || replikaUrl;
+                if (!urlValue || !isValidUrl(urlValue)) {
+                    showReplikaUrlError(true);
+                    if (replikaToggle) replikaToggle.focus();
+                    return;
+                }
+                replikaUrl = urlValue;
+                showReplikaUrlError(false);
+                saveReplikaSettings();
+            } else {
+                replikaUrl = '';
+                saveReplikaSettings();
+            }
 
             // UI State: Generating
             btnGenerate.disabled = true;
@@ -1448,6 +1619,7 @@ ${clone.innerHTML}
                             <div class="text-sm font-semibold text-slate-100 group-hover:text-emerald-400 truncate cursor-pointer">${item.title}</div>
                             <div class="text-[10px] text-slate-500 shrink-0">${item.date}</div>
                         </div>
+                        ${item.replikaMode ? `<span class="shrink-0 text-[10px] font-bold bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded"><i class="fa-solid fa-clone mr-0.5"></i>Replika</span>` : ''}
                         <button type="button" class="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded transition" onclick="handleHistoryDelete('${idx}', event)" title="Hapus riwayat">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>

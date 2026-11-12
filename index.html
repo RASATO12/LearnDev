@@ -250,6 +250,42 @@
                         <textarea id="promptInput" rows="5" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition resize-none placeholder-slate-500" placeholder="Contoh: Buatkan PRD untuk aplikasi POS kasir retail toko kelontong dengan cetak struk thermal, barcode scanner, dan dashboard penjualan harian."></textarea>
                     </div>
 
+                    <!-- REPLIKA MODE (new) -->
+                    <div class="space-y-1 border-t border-slate-800 pt-3 mt-2">
+                        <div class="relative">
+                            <i class="fa-solid fa-link absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="url" id="replikaUrl" class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition placeholder-slate-500" placeholder="Replika Mode: URL Target App (contoh https://instagram.com)">
+                            <span id="replikaUrlError" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-rose-400 font-medium">Format URL tidak valid</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                            <i class="fa-solid fa-clone mr-1 text-emerald-400"></i>
+                            Analisa app target lalu bangun PRD replika fungsionalnya.
+                        </div>
+
+                        <div class="bg-slate-800/40 border border-slate-700/60 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <div class="flex items-center space-x-1.5 text-slate-200 text-xs font-semibold">
+                                    <i class="fa-solid fa-clone text-emerald-400"></i>
+                                    <span>Replika Mode</span>
+                                </div>
+                                <label for="replikaToggle" class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="replikaToggle" class="sr-only peer">
+                                    <div id="replikaTrack" class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full ring-1 ring-slate-600 peer-checked:bg-emerald-600 transition-colors"></div>
+                                    <div id="replikaKnob" class="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full shadow-md transition-transform transform peer-checked:translate-x-4"></div>
+                                </label>
+                            </div>
+                            <div id="replikaBadge" class="hidden w-full bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-1 rounded text-center">
+                                <i class="fa-solid fa-bolt mr-1"></i>Replika Mode Aktif — UI ditiru dari target
+                            </div>
+                        </div>
+
+                        <div class="flex gap-1.5" id="replikaTemplates">
+                            <button type="button" data-replika="clone" class="flex-1 px-3 py-2 text-[11px] font-semibold bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 hover:border-emerald-500/40 hover:text-emerald-300 transition">Clone</button>
+                            <button type="button" data-replika="mvp" class="flex-1 px-3 py-2 text-[11px] font-semibold bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 hover:border-emerald-500/40 hover:text-emerald-300 transition">Swift MVP</button>
+                            <button type="button" data-replika="full" class="flex-1 px-3 py-2 text-[11px] font-semibold bg-slate-800 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 hover:border-emerald-500/40 hover:text-emerald-300 transition">Full Build</button>
+                        </div>
+                    </div>
+
                     <div class="space-y-1">
                         <label for="uiTheme" class="block text-xs font-medium text-emerald-300 uppercase tracking-wider">Tema Visual UI (Opsional)</label>
                         <div class="relative">
@@ -407,7 +443,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="./app.js?v=48"></script>
+    <script src="./app.js?v=50"></script></script>
 </body>
 
 </html>
