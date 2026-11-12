@@ -391,6 +391,7 @@ PHASE 1 — Discovery & Analysis (outline before writing):
 PHASE 2 — Clone Synthesis:
 - Generate a full PRD for a functional clone replicating the target app.
 - Preserve the essential UX/workflows, map to an equivalent clean tech stack, and note any platform/API-specific constraints.
+- **NO TOOL CALLS:** The AI must NOT open URLs, use browsing/clipboard tools, or request screenshots. Answers must be text-only.
 - If the URL is unreachable or a placeholder, still generate the PRD from the user's idea with a "replika target" disclaimer.
 
 ${replikaUrl ? '- Target URL taken from the Replika Mode panel; honor it during the PRD outline and structural decisions.' : '- No URL provided in this session; Replika Mode is ON but the target is undefined — derive the PRD from the user idea.'}
@@ -403,6 +404,7 @@ STRUCTURE & INTEGRITY RULES (ABSOLUTE):
 3. Mermaid diagrams MUST use valid and simple syntax (flowchart TD or erDiagram). Use double quotes for text containing parentheses or special characters (e.g., ["Frontend (Client)"], STORES ||--o{ USERS : "has").
 4. OUTPUT LANGUAGE MUST BE ENGLISH. Translate the user's idea from any language (Indonesian, etc.) into English automatically. The entire PRD content — explanations, section headings, feature names, Mermaid diagram labels, database schema, API endpoints — must be in English. NEVER use the user's native language in the output document.
 5. MANDATORY SECTIONS — NEVER skip, collapse, or shorten these: "## 3. Product Design Specification" (color palette, typography scale, interface layout) and "## 5. Database Schema (ERD)". If the user idea seems simple, still produce both in full.
+6. NEVER open URLs, browse the web, scrape pages, access the clipboard, or invoke any external tools (browser screenshots, OCR, file read/write, stop/clipboard). The app runs in a browser without any tool-call capability. Analyze any app reference from knowledge and the user's text-only description.
 
 FLOWCHART LAYOUT RULES — MUST FOLLOW, VIOLATION = MESSY DIAGRAM:
 (a) ALL edges flow DOWNWARD. NEVER point an edge to a node above/earlier (e.g., NEVER C --> A). For return flows (response back to the user), do not draw a backward arrow — create a new node positioned lower, e.g., A["Cashier"] --> B["Frontend"] --> C["Success Response"].
@@ -529,32 +531,60 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
         const customKey = localStorage.getItem(NINEROUTER_KEY_STORAGE);
         const geminiKey = localStorage.getItem(API_KEY_STORAGE);
 
+        // Strip a model error stub (e.g. "ERROR: Cannot read clipboard ...") that sometimes
+        // precedes the actual PRD document. Returns the document from the first heading;
+        // throws a friendly error if the content is still unusable.
+        const sanitizePRD = (text) => {
+            let content = (text || '').trim();
+            const heading = content.indexOf('\n# ');
+            if (heading > 0) content = content.slice(heading + 1).trim();
+            if (!content || /^ERROR|I cannot|I can't|unable to/i.test(content)) {
+                throw new Error('The model did not return a valid PRD. Please try again.');
+            }
+            return content;
+        };
+
         // Option 1: 9Router / OpenAI-compatible endpoint
         if (customUrl) {
             const endpoint = customUrl.replace(/\/+$/, '') + '/chat/completions';
             const headers = { 'Content-Type': 'application/json' };
             if (customKey) headers['Authorization'] = `Bearer ${customKey}`;
 
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    model: provider,
-                    messages: [
-                        { role: 'system', content: buildSystemPrompt() },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    temperature: 0.3
-                })
-            });
+            const fetchWithRetry = async (attempt = 1) => {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        model: provider,
+                        messages: [
+                            { role: 'system', content: buildSystemPrompt() },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        temperature: 0.3
+                    })
+                });
 
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`9Router error (${response.status}): ${errText}`);
-            }
+                if (!res.ok) {
+                    const errText = await res.text().catch(() => '');
+                    const msg = res.statusText || errText || `server error (${res.status})`;
+                    // Retry on server overload (503) / overload (429) / any 5xx up to 4 attempts with backoff
+                    if ((res.status >= 500 || res.status === 429) && attempt < 4) {
+                        const delay = Math.min(2000 * attempt * 2, 30000);
+                        await new Promise(r => setTimeout(r, delay));
+                        return fetchWithRetry(attempt + 1);
+                    }
+                    throw new Error(`9Router error (${res.status}): ${msg}`);
+                }
+                const data = await res.json().catch(() => ({}));
+                try {
+                    return sanitizePRD(data.choices?.[0]?.message?.content || '');
+                } catch (e) {
+                    if (attempt < 2) return fetchWithRetry(attempt + 1);
+                    throw e;
+                }
+            };
 
-            const data = await response.json();
-            return data.choices?.[0]?.message?.content || '';
+            return await fetchWithRetry();
         }
 
         // Option 2: Direct Google Gemini API
@@ -581,25 +611,41 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
         };
 
         const fetchWithRetry = async (attempt = 1) => {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let res;
+            try {
+                res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (networkError) {
+                if (attempt < 3) {
+                    await new Promise(r => setTimeout(r, 1500 * attempt));
+                    return fetchWithRetry(attempt + 1);
+                }
+                throw new Error(`Network error: ${networkError.message}`);
+            }
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 const msg = err.error?.message || `Google API error status ${res.status}`;
-                // Retry on 503 (overloaded) up to 3 times with backoff
-                if (res.status === 503 && attempt < 3) {
-                    await new Promise(r => setTimeout(r, 1500 * attempt));
+                // Retry on server overload (503), rate limit (429) or any 5xx up to 4 attempts with backoff
+                if (attempt < 4 && (res.status >= 500 || res.status === 429)) {
+                    const delay = Math.min(2000 * attempt * 2, 30000);
+                    await new Promise(r => setTimeout(r, delay));
                     return fetchWithRetry(attempt + 1);
                 }
                 throw new Error(msg);
             }
 
             const json = await res.json();
-            return json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            let text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            try {
+                return sanitizePRD(text);
+            } catch (e) {
+                if (attempt < 2) return fetchWithRetry(attempt + 1);
+                throw e;
+            }
         };
 
         const result = await fetchWithRetry();
@@ -1286,15 +1332,25 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
                 if (progressSteps) progressSteps.classList.add('hidden');
                 if (previewEmpty) previewEmpty.classList.remove('hidden');
 
+                // Pesan error agar mudah dibaca oleh user
+                let msg = err.message;
+                if (msg.startsWith('The model did not return a valid PRD')) {
+                    msg = 'Model menolak mengembalikan dokumen PRD yang valid — silakan tekan Generate PRD lagi.';
+                } else if (msg.startsWith('Network error')) {
+                    msg = 'Akses jaringan gagal (offline?). Cek koneksi internet dan ulangi lagi.';
+                } else if (msg.startsWith('9Router error')) {
+                    msg = 'Akses endpoint 9Router gagal — cek URL dan kunci API.';
+                }
+
                 if (generationProgress) {
-                    generationProgress.innerHTML = `<span class="text-xs text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Gagal: ${err.message}</span>`;
+                    generationProgress.innerHTML = `<span class="text-xs text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${msg}</span>`;
                 }
 
                 if (window.Swal) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Gagal Menghasilkan PRD',
-                        text: err.message,
+                        text: msg,
                         background: '#0b0f17',
                         color: '#f8fafc',
                         confirmButtonColor: '#10b981'
