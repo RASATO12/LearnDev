@@ -118,7 +118,8 @@ Pick `Dark (Emerald)` or `Light` from the top dropdown. `uiTheme` and the dark/l
 
 ## 8. Development / Cache Busting
 
-- `app.js` has a **cache buster** in `index.html`: `<script src="./app.js?v=49"></script>`. Every change to `app.js` must bump this number (v47 → v48 → v49...).
+- `app.js` has a **cache buster** in `index.html`: `<script src="./app.js?v=53"></script>`. Every change to `app.js` must bump this number (v47 → v48 → v49 ...).
+- A model response that stops before the last sections (Section 7/8) or ends on an unfinished table row is detected as **truncated** — the call is retried twice with exponential backoff before failing.
 - `style.css` is a hand-compiled Tailwind v3.4.19 subset — new utilities must be appended manually.
 - Nodes served by `node .bcode/serve.js` on port 8899.
 - Mermaid `htmlLabels: false` + `sanitizeSvgForCanvas` are the only text-rendering paths to keep PNG/JPG export working.
@@ -127,7 +128,9 @@ Pick `Dark (Emerald)` or `Light` from the top dropdown. `uiTheme` and the dark/l
 
 Located in `.bcode/`:
 
-- `test_live_v48.cjs` — checks HTML/JS/CSS/prompt structure against the live file layout (14/14).
+- `test_live_v53.cjs` — checks HTML/JS/CSS/prompt structure against the live file layout (54/54).
+- `test_sanitize_prd.cjs` — sanitizePRD error-stub stripping units (8/8).
+- `test_truncated_prd.cjs` — truncated-PRD detection + exponential retry (8/8).
 - `test_extract_full_prd_sections.cjs` — end-to-end download/AP context test (17/17).
 - `test_prompt_sections.cjs` — section structure test (14/14).
 - `test_subgraph_clean.cjs` — Mermaid subgraph normalization.

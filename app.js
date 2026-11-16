@@ -531,6 +531,29 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
         const customKey = localStorage.getItem(NINEROUTER_KEY_STORAGE);
         const geminiKey = localStorage.getItem(API_KEY_STORAGE);
 
+        // A model response that never reaches the last numbered sections (7, 8) or ends on
+        // an unfinished table row is incomplete — the generation was cut off mid-response
+        // (e.g. the RustGet PRD stopped at Section 6). Detect it so the app can retry.
+        const isTruncatedPRD = (content) => {
+            if (!content) return false;
+            const headings = (content || '').match(/(?:\n|^)##\s+(\d+)\./gm) || [];
+            const lastNum = headings.length > 0 ? parseInt(headings[headings.length - 1].match(/(\d+)/)[1], 10) : -1;
+            if (lastNum < 7) return true;
+            const lastLine = (content || '').split('\n').pop().trim();
+            return lastLine.endsWith('|');
+        };
+        const MAX_ATTEMPTS = 3; // truncated content is retried twice more
+        let truncatedAttempts = 0;
+        const withRetryOnTruncation = (content) => {
+            if (isTruncatedPRD(content) && truncatedAttempts < MAX_ATTEMPTS - 1) {
+                truncatedAttempts += 1;
+                const delay = Math.min(3000 * truncatedAttempts * 2, 30000);
+                const e = new Error(`Terpotong ... (percobaan ${truncatedAttempts}/${MAX_ATTEMPTS})`);
+                return { retry: true, content: e, delay };
+            }
+            return { retry: false, content: content || '' };
+        };
+
         // Strip a model error stub (e.g. "ERROR: Cannot read clipboard ...") that sometimes
         // precedes the actual PRD document. Returns the document from the first heading;
         // throws a friendly error if the content is still unusable.
@@ -576,8 +599,14 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
                     throw new Error(`9Router error (${res.status}): ${msg}`);
                 }
                 const data = await res.json().catch(() => ({}));
+                const content = data.choices?.[0]?.message?.content || '';
+                const res9 = withRetryOnTruncation(content);
+                if (res9.retry) {
+                    await new Promise(r => setTimeout(r, res9.delay));
+                    return fetchWithRetry(attempt + 1);
+                }
                 try {
-                    return sanitizePRD(data.choices?.[0]?.message?.content || '');
+                    return sanitizePRD(res9.content);
                 } catch (e) {
                     if (attempt < 2) return fetchWithRetry(attempt + 1);
                     throw e;
@@ -640,8 +669,14 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
 
             const json = await res.json();
             let text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const gem = withRetryOnTruncation(text);
+            if (gem.retry) {
+                await new Promise(r => setTimeout(r, gem.delay));
+                if (attempt < MAX_ATTEMPTS) return fetchWithRetry(attempt + 1);
+                throw gem.content;
+            }
             try {
-                return sanitizePRD(text);
+                return sanitizePRD(gem.content);
             } catch (e) {
                 if (attempt < 2) return fetchWithRetry(attempt + 1);
                 throw e;
@@ -1335,7 +1370,9 @@ ${isMinimalist ? '- Prioritize the YAGNI principle (You Aren\'t Gonna Need It) a
                 // Pesan error agar mudah dibaca oleh user
                 let msg = err.message;
                 if (msg.startsWith('The model did not return a valid PRD')) {
-                    msg = 'Model menolak mengembalikan dokumen PRD yang valid — silakan tekan Generate PRD lagi.';
+                    msg = 'Dokumen PRD yang dihasilkan tidak lengkap atau terpotong — silakan tekan Generate PRD lagi.';
+                } else if (msg.startsWith('Terpotong')) {
+                    msg = `Dokumen terpotong (percobaan ${msg.slice(msg.indexOf('(')) + 1}) — silakan tekan Generate PRD lagi.`;
                 } else if (msg.startsWith('Network error')) {
                     msg = 'Akses jaringan gagal (offline?). Cek koneksi internet dan ulangi lagi.';
                 } else if (msg.startsWith('9Router error')) {
