@@ -428,7 +428,7 @@ DOCUMENT STRUCTURE:
 This section is MANDATORY — produce it in full detail even for a minimal product.
 - Selected Visual Theme: ${selectedTheme}
 - Color Palette: a role-to-hex table covering Background, Surface, Primary Accent, Secondary Accent, Success, Warning, Error, Text Primary, Text Secondary, and Border colors. Give the exact hex code for every role (e.g. Background #0B0F17, Primary Accent #10B981).
-- Typography Scale: font families (sans/serif/mono), the full type scale (xs, sm, base, lg, xl, 2xl, 3xl) with size in rem/px, font weights, and line-heights, plus where each size is used.
+- Typography Scale: font families (sans/serif/mono), the full type scale (xs, sm, base, lg, xl, 2xl, 3xl) with size in **rem/px (sp for Android)**, font weights, and line-heights, plus where each size is used.
 - Interface Layout: spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
 
 ## 4. System Workflow & Mermaid Diagrams
@@ -444,6 +444,7 @@ flowchart TD
 This section is MANDATORY — produce it in full even if the schema is simple.
 - A visual ERD diagram using Mermaid erDiagram syntax (see rules below).
 - Table definitions, columns, data types, indexes, and key relationships.
+- If the app is an Android / productivity / calendar app, the task entity must include \`scheduled_date\`, \`scheduled_slot_start\`, and \`scheduled_slot_end\` so rescheduling to an empty next-day slot is possible.
 
 ERD SYNTAX RULES — MUST FOLLOW EXACTLY, VIOLATION = BROKEN DIAGRAM:
 (a) EVERY entity MUST have a full attribute body in braces. NEVER list an entity name on a relationship line without defining its body.
@@ -497,7 +498,8 @@ Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCod
 
 ### Design System Summary (MUST FOLLOW)
 - **Color Palette:** (Background, Surface, Primary Accent, Secondary Accent, Success, Warning, Error, Text Primary, Text Secondary, Border) — with exact hex codes.
-- **Typography Scale:** (xs, sm, base, lg, xl, 2xl, 3xl) with font families, sizes in rem/px, weights, line-heights, and usage of each.
+- **Typography Scale:** (xs, sm, base, lg, xl, 2xl, 3xl) with font families, **platform-native sizes (sp for Android/Kotlin/Compose, rem/px for web)**, weights, line-heights, and usage of each.
+- **Platform-aware Units:** if the target app is Mobile / Android / Kotlin / Compose, text sizes must use sp and layout spacing must use dp; otherwise use rem / px for web UI.
 - **Interface Layout:** spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
 
 ### Code Quality Rules — Anti-Slop (MUST FOLLOW)
@@ -506,10 +508,14 @@ Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCod
 - **No Tutorial Prose:** Do not write introductory or explanatory paragraphs in code files (no "We need to...", "Also...").
 - **Plain & Direct:** Write production-ready code only. Skip metaphor, skip "Think of this as...".
 - **No Dead Code:** Every function, class, and constant must be used in the generated application.
+- **Kotlin / Compose (when the target platform is Android):** prefer StateFlow / SharedFlow for state and events, keep UI state separate from business state, and use remember / derivedStateOf correctly to avoid recomposition loops.
 
 ### Database Schema Summary (FROM Section 5 — MUST ATTACH)
 - Take the English ERD / relational schema from the PRD and restate it as an execution table list.
 - For every entity: name, key columns, types (PK/FK/UNIQUE flags), and the relationship to other entities.
+- **Scheduling Columns:** for task / calendar / planning apps, the task entity must include scheduled_date, scheduled_slot_start and scheduled_slot_end so a coding agent can implement rescheduling logic (drag to an empty next-day slot).
+- **Time-boxing Columns:** for planning / productivity apps, include work_start_minutes and work_end_minutes in the settings entity (daily active-hour boundaries) so the agent can build daily limits.
+- **StateFlow:** on Android / Kotlin tasks, prefer StateFlow / SharedFlow for event streams, keep UI state separate from business state, and use remember / derivedStateOf to avoid recomposition loops.
 - Keep it compact so any coding agent (Cursor, Claude, Windsurf) can recreate the database model from any PRD.
 
 ### API Endpoints Summary (FROM Section 6 — MUST ATTACH)
