@@ -430,6 +430,7 @@ This section is MANDATORY — produce it in full detail even for a minimal produ
 - Color Palette: a role-to-hex table covering Background, Surface, Primary Accent, Secondary Accent, Success, Warning, Error, Text Primary, Text Secondary, and Border colors. Give the exact hex code for every role (e.g. Background #0B0F17, Primary Accent #10B981).
 - Typography Scale: font families (sans/serif/mono), the full type scale (xs, sm, base, lg, xl, 2xl, 3xl) with size in **rem/px (sp for Android)**, font weights, and line-heights, plus where each size is used.
 - Interface Layout: spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
+- **Compose Component Naming:** for Android / Kotlin / Compose, \`BottomNavigation\` in Material 3 Compose is called \`NavigationBar\` and \`BottomNavigationItem\` is \`NavigationBarItem\`; always use these exact Compose names so a coding agent resolves the correct API.
 
 ## 4. System Workflow & Mermaid Diagrams
 Include a valid Mermaid diagram block (architecture or user flow):
@@ -501,6 +502,7 @@ Include an execution guide block for AI coding agents (Cursor, Windsurf, OpenCod
 - **Typography Scale:** (xs, sm, base, lg, xl, 2xl, 3xl) with font families, **platform-native sizes (sp for Android/Kotlin/Compose, rem/px for web)**, weights, line-heights, and usage of each.
 - **Platform-aware Units:** if the target app is Mobile / Android / Kotlin / Compose, text sizes must use sp and layout spacing must use dp; otherwise use rem / px for web UI.
 - **Interface Layout:** spacing scale, grid/column structure, responsive breakpoints (mobile, tablet, desktop), core UI components (buttons, inputs, cards, navigation, modals), and the overall page shell for the main screens.
+- **Compose Component Naming:** for Android / Kotlin / Compose, \`BottomNavigation\` in Material 3 Compose is called \`NavigationBar\` and \`BottomNavigationItem\` is \`NavigationBarItem\`; always use these exact Compose names so a coding agent resolves the correct API.
 
 ### Code Quality Rules — Anti-Slop (MUST FOLLOW)
 - **No Redundant Comments:** Never add comments like \`// This function handles X\` or \`// Initialize MainActivity\`. Code must be self-explanatory.

@@ -118,7 +118,7 @@ Pick `Dark (Emerald)` or `Light` from the top dropdown. `uiTheme` and the dark/l
 
 ## 8. Development / Cache Busting
 
-- `app.js` has a **cache buster** in `index.html`: `<script src="./app.js?v=54"></script>`. Every change to `app.js` must bump this number (v47 → v48 → v49 ...).
+- `app.js` has a **cache buster** in `index.html`: `<script src="./app.js?v=55"></script>`. Every change to `app.js` must bump this number (v47 → v48 → v49 ...).
 - A model response that stops before the last sections (Section 7/8) or ends on an unfinished table row is detected as **truncated** — the call is retried twice with exponential backoff before failing.
 - **Platform-aware units:** Android/Kotlin/Compose uses `sp`/`dp`; web uses `rem`/`px` — forced on both the PRD design section (Section 3) and the AGENTS.md guide (Section 8).
 - `style.css` is a hand-compiled Tailwind v3.4.19 subset — new utilities must be appended manually.
@@ -129,7 +129,7 @@ Pick `Dark (Emerald)` or `Light` from the top dropdown. `uiTheme` and the dark/l
 
 Located in `.bcode/`:
 
-- `test_live_v54.cjs` — checks HTML/JS/CSS/prompt structure against the live file layout (59/59).
+- `test_live_v55.cjs` — checks HTML/JS/CSS/prompt structure against the live file layout (60/60).
 - `test_sanitize_prd.cjs` — sanitizePRD error-stub stripping units (8/8).
 - `test_truncated_prd.cjs` — truncated-PRD detection + exponential retry (8/8).
 - `test_extract_full_prd_sections.cjs` — end-to-end download/AP context test (17/17).
@@ -137,4 +137,4 @@ Located in `.bcode/`:
 - `test_subgraph_clean.cjs` — Mermaid subgraph normalization.
 - `test_extract_real_source.cjs` — AGENTS.md extraction fidelity.
 
-To run: `node .bcode/test_live_v54.cjs`.
+To run: `node .bcode/test_live_v55.cjs`.
